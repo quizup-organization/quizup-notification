@@ -1,0 +1,21 @@
+spring:
+  config:
+    import: optional:classpath:quizup-defaults.yml
+  application:
+    name: quizup-notification
+  profiles:
+    default: local
+
+  flyway:
+    locations: classpath:db/migration/notification
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+microservice:
+  swagger:
+    description: QuizUp Notification Module - per-player inbox and preferences
+  websocket:
+    enabled: false

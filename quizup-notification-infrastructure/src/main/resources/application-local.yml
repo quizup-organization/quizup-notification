@@ -1,0 +1,13 @@
+server:
+  port: 8093
+
+spring:
+  config:
+    import: optional:classpath:quizup-local.yml
+    activate:
+      on-profile: local
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/quizup_notification
+    username: postgres
+    password: postgres
