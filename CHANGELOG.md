@@ -1,3 +1,13 @@
+## [2.0.0](https://github.com/quizup-organization/quizup-notification/compare/v1.0.2...v2.0.0) (2026-10-03)
+
+### ⚠ BREAKING CHANGES
+
+* **notification:** drop matchmaking notifications
+
+### Features
+
+* **notification:** drop matchmaking notifications ([435e7a1](https://github.com/quizup-organization/quizup-notification/commit/435e7a1917fb52bab5f9cdb52868446ca4e95591))
+
 ## [1.0.2](https://github.com/quizup-organization/quizup-notification/compare/v1.0.1...v1.0.2) (2026-10-03)
 
 ### Bug Fixes
