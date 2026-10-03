@@ -121,6 +121,12 @@ public class NotificationIngestionHandler {
         routingRepository.find(NotificationRoutingSource.LOBBY, event.lobbyId()).ifPresent(routing -> {
             createIfAllowed(routing.initiatorId(), NotificationType.LOBBY_EXPIRED, routing.opponentId(),
                     event.lobbyId(), routing.topicId(), null, null);
+            // Défi nominatif : l'invité doit aussi savoir que l'invitation n'est plus valable
+            // (sinon sa notification d'invitation reste actionnable jusqu'à la purge → 404).
+            if (routing.opponentId() != null) {
+                createIfAllowed(routing.opponentId(), NotificationType.LOBBY_EXPIRED, routing.initiatorId(),
+                        event.lobbyId(), routing.topicId(), null, null);
+            }
             routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
         });
     }
