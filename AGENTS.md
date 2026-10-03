@@ -13,8 +13,8 @@
 - **Inbox** : consomme les événements de domaine des autres services et crée une notification
   personnelle par destinataire (`notification_entry` : type, acteur, source, sujet, partie,
   expiration, lu/non-lu).
-- **Préférences** : une catégorie (`FOLLOW`, `LOBBY`, `MATCHMAKING`) peut être coupée ; défaut
-  activé. Une notification dont la catégorie est coupée n'est pas créée.
+- **Préférences** : une catégorie (`FOLLOW`, `LOBBY`) peut être coupée ; défaut activé. Une
+  notification dont la catégorie est coupée n'est pas créée.
 - **Livraison** : le service publie `NotificationCreatedEvent` sur le bus ; le **BFF** le pousse
   sur `/topic/notifications/{userId}` et l'expose en REST (`/api/notifications`,
   `/api/notification-preferences`).
@@ -51,15 +51,16 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 | `LobbyJoinedEvent` | `LOBBY_ACCEPTED` pour l'initiateur |
 | `LobbyDeclinedEvent` | `LOBBY_DECLINED` pour l'initiateur |
 | `LobbyCancelledEvent` | `LOBBY_CANCELLED` pour l'autre participant (selon `reason`) |
-| `LobbyExpiredEvent` | `LOBBY_EXPIRED` pour l'initiateur |
-| `MatchmakingMatchedEvent` | `MATCHMAKING_READY` pour le joueur du ticket |
+| `LobbyExpiredEvent` | `LOBBY_EXPIRED` pour l'initiateur **et** l'invité (défi nominatif) |
 
 - **Idempotence** : `notificationId = UUID.nameUUIDFromBytes(type + ":" + sourceId + ":" + userId)`
   + garde d'existence + contrainte unique `uq_notification_source` ; une relecture Kafka
   at-least-once ne duplique pas.
-- **Routage** : `notification_routing_entry` (alimenté par `LobbyCreated/Joined`,
-  `MatchmakingStarted`) résout les destinataires des événements terminaux qui ne les portent pas.
-  L'index et la création vivent dans le **même processing group** (ordre par agrégat garanti).
+- **Routage** : `notification_routing_entry` (alimenté par `LobbyCreated/Joined`) résout les
+  destinataires des événements terminaux qui ne les portent pas. L'index et la création vivent
+  dans le **même processing group** (ordre par agrégat garanti).
+- L'appariement public (`Matchmaking*`) n'est **pas** ingéré : l'écran de recherche bascule en
+  direct vers l'arène (aucune notification d'appariement).
 - Les notifications **ne sont pas supprimées** en v1 (pas de TTL) ; seule la date de lecture
   évolue.
 

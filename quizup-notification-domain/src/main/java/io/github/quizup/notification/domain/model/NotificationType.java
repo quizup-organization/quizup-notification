@@ -10,13 +10,11 @@ public enum NotificationType {
     LOBBY_ACCEPTED,
     LOBBY_DECLINED,
     LOBBY_CANCELLED,
-    LOBBY_EXPIRED,
-    MATCHMAKING_READY;
+    LOBBY_EXPIRED;
 
     public NotificationCategory category() {
         return switch (this) {
             case FOLLOW -> NotificationCategory.FOLLOW;
-            case MATCHMAKING_READY -> NotificationCategory.MATCHMAKING;
             default -> NotificationCategory.LOBBY;
         };
     }

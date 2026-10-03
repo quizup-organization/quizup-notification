@@ -1,7 +1,6 @@
 package io.github.quizup.notification.application.handler.event;
 
 import io.github.quizup.matchmaking.domain.event.LobbyEvent;
-import io.github.quizup.matchmaking.domain.event.MatchmakingEvent;
 import io.github.quizup.notification.domain.command.NotificationCommand;
 import io.github.quizup.notification.domain.model.NotificationCategory;
 import io.github.quizup.notification.domain.model.NotificationPreference;
@@ -139,44 +138,6 @@ public class NotificationIngestionHandler {
     @EventHandler
     public void on(LobbyEvent.LobbyPurgedEvent event) {
         routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
-    }
-
-    // ============================ Appariement ============================
-
-    @EventHandler
-    public void on(MatchmakingEvent.MatchmakingStartedEvent event) {
-        routingRepository.save(NotificationRouting.builder()
-                .sourceType(NotificationRoutingSource.MATCHMAKING)
-                .sourceId(event.matchmakingId())
-                .initiatorId(event.playerId())
-                .topicId(event.topicId())
-                .updatedAt(event.startedAt())
-                .build());
-    }
-
-    @EventHandler
-    public void on(MatchmakingEvent.MatchmakingMatchedEvent event) {
-        routingRepository.find(NotificationRoutingSource.MATCHMAKING, event.matchmakingId())
-                .ifPresent(routing -> {
-                    createIfAllowed(routing.initiatorId(), NotificationType.MATCHMAKING_READY,
-                            event.opponentId(), event.matchmakingId(), routing.topicId(), event.gameId(), null);
-                    routingRepository.delete(NotificationRoutingSource.MATCHMAKING, event.matchmakingId());
-                });
-    }
-
-    @EventHandler
-    public void on(MatchmakingEvent.MatchmakingCancelledEvent event) {
-        routingRepository.delete(NotificationRoutingSource.MATCHMAKING, event.matchmakingId());
-    }
-
-    @EventHandler
-    public void on(MatchmakingEvent.MatchmakingFailedEvent event) {
-        routingRepository.delete(NotificationRoutingSource.MATCHMAKING, event.matchmakingId());
-    }
-
-    @EventHandler
-    public void on(MatchmakingEvent.MatchmakingPurgedEvent event) {
-        routingRepository.delete(NotificationRoutingSource.MATCHMAKING, event.matchmakingId());
     }
 
     // =====================================================================

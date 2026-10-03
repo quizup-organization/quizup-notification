@@ -1,7 +1,6 @@
 package io.github.quizup.notification.domain.model;
 
-/** Source du routage : salon privé ou ticket d'appariement. */
+/** Source du routage : salon privé. */
 public enum NotificationRoutingSource {
-    LOBBY,
-    MATCHMAKING
+    LOBBY
 }

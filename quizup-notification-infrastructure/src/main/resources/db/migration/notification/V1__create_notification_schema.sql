@@ -22,14 +22,14 @@ CREATE UNIQUE INDEX uq_notification_source ON notification_entry (type, source_i
 
 CREATE TABLE notification_preference_entry (
     user_id    VARCHAR(255) NOT NULL,
-    category   VARCHAR(40)  NOT NULL,   -- FOLLOW, LOBBY, MATCHMAKING
+    category   VARCHAR(40)  NOT NULL,   -- FOLLOW, LOBBY
     enabled    BOOLEAN      NOT NULL,
     updated_at TIMESTAMP    NOT NULL,
     PRIMARY KEY (user_id, category)
 );
 
 CREATE TABLE notification_routing_entry (
-    source_type    VARCHAR(40)  NOT NULL,   -- LOBBY, MATCHMAKING
+    source_type    VARCHAR(40)  NOT NULL,   -- LOBBY
     source_id      VARCHAR(255) NOT NULL,
     initiator_id   VARCHAR(255),
     opponent_id    VARCHAR(255),
