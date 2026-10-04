@@ -1,3 +1,9 @@
+## [2.2.0](https://github.com/quizup-organization/quizup-notification/compare/v2.1.0...v2.2.0) (2026-10-04)
+
+### Features
+
+* **notification:** expiration des invitations closes et suppression des notifications d'annulation ([95846a7](https://github.com/quizup-organization/quizup-notification/commit/95846a73c4e0f45719790ee12805d1598427a11f))
+
 ## [2.1.0](https://github.com/quizup-organization/quizup-notification/compare/v2.0.0...v2.1.0) (2026-10-04)
 
 ### Features
