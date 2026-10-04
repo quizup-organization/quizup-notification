@@ -1,3 +1,9 @@
+## [2.1.0](https://github.com/quizup-organization/quizup-notification/compare/v2.0.0...v2.1.0) (2026-10-04)
+
+### Features
+
+* **notification:** suppression des notifications par le destinataire (hard delete) ([ad3828e](https://github.com/quizup-organization/quizup-notification/commit/ad3828edcb23d3cee4a6397d4a9304293803ff85))
+
 ## [2.0.0](https://github.com/quizup-organization/quizup-notification/compare/v1.0.2...v2.0.0) (2026-10-03)
 
 ### ⚠ BREAKING CHANGES
