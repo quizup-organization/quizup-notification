@@ -52,8 +52,11 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 | `LobbyCreatedEvent` (nominatif) | `LOBBY_INVITATION` pour l'invité (+ index de routage) |
 | `LobbyJoinedEvent` | `LOBBY_ACCEPTED` pour l'initiateur |
 | `LobbyDeclinedEvent` | `LOBBY_DECLINED` pour l'initiateur |
-| `LobbyCancelledEvent` | `LOBBY_CANCELLED` pour l'autre participant (selon `reason`) |
-| `LobbyExpiredEvent` | `LOBBY_EXPIRED` pour l'initiateur **et** l'invité (défi nominatif) |
+| `LobbyCancelledEvent` | — (invitation en attente expirée, aucune notification) |
+| `LobbyExpiredEvent` | — (invitation en attente expirée, aucune notification) |
+
+> Les types `LOBBY_CANCELLED` et `LOBBY_EXPIRED` ne sont **plus produits** (« défi raté » sans
+> valeur ajoutée) ; les lignes historiques restent affichables côté client.
 
 - **Idempotence** : `notificationId = UUID.nameUUIDFromBytes(type + ":" + sourceId + ":" + userId)`
   + garde d'existence + contrainte unique `uq_notification_source` ; une relecture Kafka
@@ -67,6 +70,11 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
   l'agrégat. Limite assumée : une relecture Kafka at-least-once postérieure à la suppression peut
   recréer la notification (la garde `existsById` ne voit plus la ligne) — cas exceptionnel
   (reset du consumer group).
+- **Invitations** : à la clôture d'un salon (rejoint, refusé, annulé, expiré, échoué, complété,
+  purgé), l'invitation en attente est **expirée dans le read model** (`expiresAt` = instant de
+  l'événement) : le client masque Accepter/Refuser et l'acceptation tardive (salon purgé → 404)
+  est évitée. `LobbyFailedEvent` est consommé pour ce seul usage (pas de notification
+  `LOBBY_FAILED`).
 
 ---
 

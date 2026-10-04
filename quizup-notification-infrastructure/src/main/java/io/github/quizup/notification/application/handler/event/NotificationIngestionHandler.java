@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -30,14 +29,16 @@ import java.util.UUID;
  * par agrégat (clé Kafka) garantit que l'index de routage est à jour avant les événements
  * terminaux. L'identifiant de notification est déterministe (type + source + destinataire) :
  * la relecture at-least-once est idempotente (contrainte unique en base).
+ * <p>
+ * À la clôture d'un salon, l'**invitation en attente est expirée** dans le read model
+ * (`expiresAt` = instant de l'événement) : le client masque Accepter/Refuser et l'acceptation
+ * tardive (salon purgé → 404) est évitée.
  */
 @Component
 @ProcessingGroup("notification-ingestion")
 public class NotificationIngestionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationIngestionHandler.class);
-
-    private static final String PLAYER_LEFT = "PLAYER_LEFT";
 
     private final CommandGateway commandGateway;
     private final NotificationRepositoryPort notificationRepository;
@@ -82,6 +83,9 @@ public class NotificationIngestionHandler {
 
     @EventHandler
     public void on(LobbyEvent.LobbyJoinedEvent event) {
+        // L'invitation n'est plus en attente dès que le salon est rejoint (même depuis
+        // un autre onglet/appareil) : on l'expire pour masquer Accepter/Refuser.
+        notificationRepository.expireInvitations(event.lobbyId(), event.joinedAt());
         routingRepository.find(NotificationRoutingSource.LOBBY, event.lobbyId()).ifPresent(routing -> {
             routingRepository.save(routing.toBuilder()
                     .participantId(event.participantId())
@@ -94,6 +98,7 @@ public class NotificationIngestionHandler {
 
     @EventHandler
     public void on(LobbyEvent.LobbyDeclinedEvent event) {
+        notificationRepository.expireInvitations(event.lobbyId(), event.declinedAt());
         String topicId = routingRepository
                 .find(NotificationRoutingSource.LOBBY, event.lobbyId())
                 .map(NotificationRouting::topicId)
@@ -105,38 +110,34 @@ public class NotificationIngestionHandler {
 
     @EventHandler
     public void on(LobbyEvent.LobbyCancelledEvent event) {
-        routingRepository.find(NotificationRoutingSource.LOBBY, event.lobbyId()).ifPresent(routing -> {
-            String recipient = PLAYER_LEFT.equals(event.reason())
-                    ? routing.initiatorId()
-                    : Optional.ofNullable(routing.participantId()).orElse(routing.opponentId());
-            createIfAllowed(recipient, NotificationType.LOBBY_CANCELLED, event.initiatorId(),
-                    event.lobbyId(), routing.topicId(), null, null);
-            routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
-        });
-    }
-
-    @EventHandler
-    public void on(LobbyEvent.LobbyExpiredEvent event) {
-        routingRepository.find(NotificationRoutingSource.LOBBY, event.lobbyId()).ifPresent(routing -> {
-            createIfAllowed(routing.initiatorId(), NotificationType.LOBBY_EXPIRED, routing.opponentId(),
-                    event.lobbyId(), routing.topicId(), null, null);
-            // Défi nominatif : l'invité doit aussi savoir que l'invitation n'est plus valable
-            // (sinon sa notification d'invitation reste actionnable jusqu'à la purge → 404).
-            if (routing.opponentId() != null) {
-                createIfAllowed(routing.opponentId(), NotificationType.LOBBY_EXPIRED, routing.initiatorId(),
-                        event.lobbyId(), routing.topicId(), null, null);
-            }
-            routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
-        });
-    }
-
-    @EventHandler
-    public void on(LobbyEvent.LobbyCompletedEvent event) {
+        // Plus de notification « défi annulé » : l'invitation en attente est simplement expirée.
+        notificationRepository.expireInvitations(event.lobbyId(), event.cancelledAt());
         routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
     }
 
     @EventHandler
+    public void on(LobbyEvent.LobbyExpiredEvent event) {
+        // Plus de notification « défi expiré » : l'invitation en attente est simplement expirée.
+        notificationRepository.expireInvitations(event.lobbyId(), event.expiredAt());
+        routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
+    }
+
+    @EventHandler
+    public void on(LobbyEvent.LobbyCompletedEvent event) {
+        notificationRepository.expireInvitations(event.lobbyId(), event.completedAt());
+        routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
+    }
+
+    /** Échec système : la partie n'a pas pu être créée, l'invitation devient non actionnable. */
+    @EventHandler
+    public void on(LobbyEvent.LobbyFailedEvent event) {
+        notificationRepository.expireInvitations(event.lobbyId(), event.failedAt());
+    }
+
+    @EventHandler
     public void on(LobbyEvent.LobbyPurgedEvent event) {
+        // Filet de sécurité (la purge suit normalement un événement terminal déjà traité).
+        notificationRepository.expireInvitations(event.lobbyId(), event.purgedAt());
         routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
     }
 

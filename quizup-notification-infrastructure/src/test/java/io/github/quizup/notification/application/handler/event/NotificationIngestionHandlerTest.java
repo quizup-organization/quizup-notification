@@ -1,32 +1,27 @@
 package io.github.quizup.notification.application.handler.event;
 
 import io.github.quizup.matchmaking.domain.event.LobbyEvent;
-import io.github.quizup.notification.domain.command.NotificationCommand;
-import io.github.quizup.notification.domain.model.NotificationRouting;
 import io.github.quizup.notification.domain.model.NotificationRoutingSource;
-import io.github.quizup.notification.domain.model.NotificationType;
 import io.github.quizup.notification.domain.port.out.NotificationPreferenceRepositoryPort;
 import io.github.quizup.notification.domain.port.out.NotificationRepositoryPort;
 import io.github.quizup.notification.domain.port.out.NotificationRoutingRepositoryPort;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
 import java.time.Instant;
-import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
- * Un défi nominatif expiré doit prévenir **les deux** joueurs : sinon l'invitation de l'invité
- * reste actionnable jusqu'à la purge du salon et provoque un 404 à l'acceptation.
+ * Un défi qui n'est plus disponible n'envoie **plus** de notification « défi raté » : l'invitation
+ * en attente est expirée dans le read model (le client masque Accepter/Refuser) et le routage est
+ * purgé. Seul le refus explicite (`LOBBY_DECLINED`) reste notifié.
  */
 class NotificationIngestionHandlerTest {
+
+    private static final Instant AT = Instant.parse("2026-10-03T18:02:00Z");
 
     private final CommandGateway commandGateway = mock(CommandGateway.class);
     private final NotificationRepositoryPort notificationRepository = mock(NotificationRepositoryPort.class);
@@ -36,47 +31,41 @@ class NotificationIngestionHandlerTest {
             commandGateway, notificationRepository, preferenceRepository, routingRepository);
 
     @Test
-    void lobbyExpired_notifiesInitiatorAndInvitee() {
-        when(routingRepository.find(NotificationRoutingSource.LOBBY, "lobby-1"))
-                .thenReturn(Optional.of(NotificationRouting.builder()
-                        .sourceType(NotificationRoutingSource.LOBBY)
-                        .sourceId("lobby-1")
-                        .initiatorId("alice")
-                        .opponentId("bob")
-                        .topicId("topic-1")
-                        .updatedAt(Instant.parse("2026-10-03T18:00:00Z"))
-                        .build()));
-        when(notificationRepository.existsById(any())).thenReturn(false);
-        when(preferenceRepository.find(any(), any())).thenReturn(Optional.empty());
+    void lobbyExpired_expiresInvitationWithoutNotification() {
+        handler.on(new LobbyEvent.LobbyExpiredEvent("lobby-1", AT));
 
-        handler.on(new LobbyEvent.LobbyExpiredEvent("lobby-1", Instant.parse("2026-10-03T18:02:00Z")));
-
-        ArgumentCaptor<NotificationCommand.CreateNotificationCommand> captor =
-                ArgumentCaptor.forClass(NotificationCommand.CreateNotificationCommand.class);
-        verify(commandGateway, times(2)).send(captor.capture());
-        assertThat(captor.getAllValues())
-                .extracting(NotificationCommand.CreateNotificationCommand::userId)
-                .containsExactlyInAnyOrder("alice", "bob");
-        assertThat(captor.getAllValues())
-                .allMatch(command -> command.type() == NotificationType.LOBBY_EXPIRED);
+        verify(notificationRepository).expireInvitations("lobby-1", AT);
         verify(routingRepository).delete(NotificationRoutingSource.LOBBY, "lobby-1");
+        verifyNoInteractions(commandGateway);
     }
 
     @Test
-    void lobbyExpired_withoutOpponent_notifiesInitiatorOnly() {
-        when(routingRepository.find(NotificationRoutingSource.LOBBY, "lobby-2"))
-                .thenReturn(Optional.of(NotificationRouting.builder()
-                        .sourceType(NotificationRoutingSource.LOBBY)
-                        .sourceId("lobby-2")
-                        .initiatorId("alice")
-                        .topicId("topic-1")
-                        .updatedAt(Instant.parse("2026-10-03T18:00:00Z"))
-                        .build()));
-        when(notificationRepository.existsById(any())).thenReturn(false);
-        when(preferenceRepository.find(any(), any())).thenReturn(Optional.empty());
+    void lobbyCancelled_expiresInvitationWithoutNotification() {
+        handler.on(new LobbyEvent.LobbyCancelledEvent("lobby-2", "alice", "PLAYER_CANCELLED", AT));
 
-        handler.on(new LobbyEvent.LobbyExpiredEvent("lobby-2", Instant.parse("2026-10-03T18:02:00Z")));
+        verify(notificationRepository).expireInvitations("lobby-2", AT);
+        verify(routingRepository).delete(NotificationRoutingSource.LOBBY, "lobby-2");
+        verifyNoInteractions(commandGateway);
+    }
 
-        verify(commandGateway, times(1)).send(any(NotificationCommand.CreateNotificationCommand.class));
+    @Test
+    void lobbyDeclined_expiresInvitation() {
+        handler.on(new LobbyEvent.LobbyDeclinedEvent("lobby-3", "alice", "bob", AT));
+
+        verify(notificationRepository).expireInvitations("lobby-3", AT);
+    }
+
+    @Test
+    void lobbyJoined_expiresInvitation() {
+        handler.on(new LobbyEvent.LobbyJoinedEvent("lobby-4", "bob", AT));
+
+        verify(notificationRepository).expireInvitations("lobby-4", AT);
+    }
+
+    @Test
+    void lobbyFailed_expiresInvitation() {
+        handler.on(new LobbyEvent.LobbyFailedEvent("lobby-5", "CREATE_GAME_FAILED", AT));
+
+        verify(notificationRepository).expireInvitations("lobby-5", AT);
     }
 }

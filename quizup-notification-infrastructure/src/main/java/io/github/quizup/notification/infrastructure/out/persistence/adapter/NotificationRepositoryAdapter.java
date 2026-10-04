@@ -2,6 +2,7 @@ package io.github.quizup.notification.infrastructure.out.persistence.adapter;
 
 import io.github.quizup.notification.domain.model.Notification;
 import io.github.quizup.notification.domain.model.NotificationPage;
+import io.github.quizup.notification.domain.model.NotificationType;
 import io.github.quizup.notification.domain.port.out.NotificationRepositoryPort;
 import io.github.quizup.notification.infrastructure.out.persistence.mapper.NotificationEntityMapper;
 import io.github.quizup.notification.infrastructure.out.persistence.repository.NotificationJpaRepository;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +34,12 @@ public class NotificationRepositoryAdapter implements NotificationRepositoryPort
     @Transactional
     public void deleteById(String notificationId) {
         repository.deleteById(notificationId);
+    }
+
+    @Override
+    @Transactional
+    public void expireInvitations(String sourceId, Instant expiredAt) {
+        repository.expireBySourceIdAndType(sourceId, NotificationType.LOBBY_INVITATION, expiredAt);
     }
 
     @Override

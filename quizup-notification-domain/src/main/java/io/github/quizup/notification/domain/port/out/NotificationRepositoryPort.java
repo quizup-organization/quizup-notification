@@ -14,6 +14,12 @@ public interface NotificationRepositoryPort {
     /** Hard delete de la notification (projection de l'événement de suppression). */
     void deleteById(String notificationId);
 
+    /**
+     * Expire les invitations de défi en attente d'un salon (salon clos : accepté, refusé,
+     * annulé, expiré, échec ou purgé). Le client masque alors les actions d'acceptation.
+     */
+    void expireInvitations(String sourceId, java.time.Instant expiredAt);
+
     Optional<Notification> findById(String notificationId);
 
     boolean existsById(String notificationId);
