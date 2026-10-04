@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
+import org.axonframework.modelling.command.AggregateLifecycle;
 import org.axonframework.spring.stereotype.Aggregate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,8 @@ import static org.axonframework.modelling.command.AggregateLifecycle.apply;
  * NotificationAggregate — une notification personnelle (inbox).
  * <p>
  * Créée par l'ingestion d'un événement de domaine (identifiant déterministe : la relecture
- * Kafka est idempotente). Le destinataire peut la marquer lue ; personne d'autre.
+ * Kafka est idempotente). Le destinataire peut la marquer lue ou la supprimer ; personne d'autre.
+ * La suppression est un hard delete : l'agrégat est marqué supprimé et la projection purge la ligne.
  */
 @Aggregate
 public class NotificationAggregate {
@@ -66,6 +68,16 @@ public class NotificationAggregate {
         apply(new NotificationEvent.NotificationReadEvent(notificationId, Instant.now()));
     }
 
+    /** Seul le destinataire peut supprimer sa notification (hard delete, standard Axon). */
+    @CommandHandler
+    public void handle(NotificationCommand.DeleteNotificationCommand command) {
+        if (!command.userId().equals(userId)) {
+            throw new NotificationExceptions.NotNotificationOwnerProblem(notificationId, command.userId());
+        }
+        logger.debug("Deleting notification: id={}, userId={}", notificationId, command.userId());
+        apply(new NotificationEvent.NotificationDeletedEvent(notificationId, userId, Instant.now()));
+    }
+
     // ============================ Event Sourcing ============================
 
     @EventSourcingHandler
@@ -78,5 +90,10 @@ public class NotificationAggregate {
     @EventSourcingHandler
     public void on(NotificationEvent.NotificationReadEvent event) {
         this.readAt = event.readAt();
+    }
+
+    @EventSourcingHandler
+    public void on(NotificationEvent.NotificationDeletedEvent event) {
+        AggregateLifecycle.markDeleted();
     }
 }

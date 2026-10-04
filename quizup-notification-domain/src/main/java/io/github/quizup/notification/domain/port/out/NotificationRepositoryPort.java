@@ -11,6 +11,9 @@ public interface NotificationRepositoryPort {
 
     void save(Notification notification);
 
+    /** Hard delete de la notification (projection de l'événement de suppression). */
+    void deleteById(String notificationId);
+
     Optional<Notification> findById(String notificationId);
 
     boolean existsById(String notificationId);

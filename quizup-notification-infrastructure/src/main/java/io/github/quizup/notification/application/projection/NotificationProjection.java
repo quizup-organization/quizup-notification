@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Projection du read model « inbox ». Les notifications ne sont pas supprimées (v1) ; seule
- * la date de lecture évolue.
+ * Projection du read model « inbox ». La date de lecture évolue, et la suppression est un
+ * hard delete de la ligne (l'agrégat, lui, est marqué supprimé dans l'event store).
  */
 @Component
 @ProcessingGroup("notification-projection")
@@ -46,5 +46,11 @@ public class NotificationProjection {
                 repository.save(notification.toBuilder()
                         .readAt(event.readAt())
                         .build()));
+    }
+
+    @EventHandler
+    @Transactional
+    public void on(NotificationEvent.NotificationDeletedEvent event) {
+        repository.deleteById(event.notificationId());
     }
 }

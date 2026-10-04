@@ -60,6 +60,23 @@ class NotificationAggregateTest {
                 .expectNoEvents();
     }
 
+    @Test
+    void delete_byOwner_appliesDeletedEventAndMarksAggregateDeleted() {
+        fixture.given(created())
+                .when(new NotificationCommand.DeleteNotificationCommand(NOTIFICATION_ID, USER))
+                .expectEventsMatching(QuizUpAxonMatchers.hasPayloadMatching(
+                        NotificationEvent.NotificationDeletedEvent.class,
+                        e -> NOTIFICATION_ID.equals(((NotificationEvent.NotificationDeletedEvent) e).notificationId())))
+                .expectMarkedDeleted();
+    }
+
+    @Test
+    void delete_byOther_isRejected() {
+        fixture.given(created())
+                .when(new NotificationCommand.DeleteNotificationCommand(NOTIFICATION_ID, "user-2"))
+                .expectException(NotificationExceptions.NotNotificationOwnerProblem.class);
+    }
+
     private static NotificationEvent.NotificationCreatedEvent created() {
         return new NotificationEvent.NotificationCreatedEvent(
                 NOTIFICATION_ID, USER, NotificationType.FOLLOW, "follower-1",

@@ -29,6 +29,12 @@ public class NotificationRepositoryAdapter implements NotificationRepositoryPort
     }
 
     @Override
+    @Transactional
+    public void deleteById(String notificationId) {
+        repository.deleteById(notificationId);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Optional<Notification> findById(String notificationId) {
         return repository.findById(notificationId).map(NotificationEntityMapper::toDomain);

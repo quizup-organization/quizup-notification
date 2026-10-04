@@ -27,4 +27,16 @@ public interface NotificationEvent {
             Instant readAt
     ) implements NotificationEvent {
     }
+
+    /**
+     * La notification est supprimée par son destinataire : le read model est purgé et l'agrégat
+     * marqué supprimé ({@code AggregateLifecycle.markDeleted()}) — l'event store conserve
+     * l'historique. {@code userId} porte le destinataire pour le routage du push.
+     */
+    record NotificationDeletedEvent(
+            String notificationId,
+            String userId,
+            Instant deletedAt
+    ) implements NotificationEvent {
+    }
 }

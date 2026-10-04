@@ -12,7 +12,8 @@
 
 - **Inbox** : consomme les événements de domaine des autres services et crée une notification
   personnelle par destinataire (`notification_entry` : type, acteur, source, sujet, partie,
-  expiration, lu/non-lu).
+  expiration, lu/non-lu). Le destinataire peut la marquer lue ou la **supprimer** (hard delete du
+  read model, agrégat marqué supprimé).
 - **Préférences** : une catégorie (`FOLLOW`, `LOBBY`) peut être coupée ; défaut activé. Une
   notification dont la catégorie est coupée n'est pas créée.
 - **Livraison** : le service publie `NotificationCreatedEvent` sur le bus ; le **BFF** le pousse
@@ -31,7 +32,8 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 ## 3. Use cases (ports entrants — `domain/`)
 
 - `NotificationAggregate` : `CreateNotificationCommand` (système, identifiant déterministe),
-  `MarkNotificationReadCommand` (destinataire uniquement).
+  `MarkNotificationReadCommand` (destinataire uniquement), `DeleteNotificationCommand`
+  (destinataire uniquement — `NotificationDeletedEvent` puis `AggregateLifecycle.markDeleted()`).
 - `NotificationPreferenceAggregate` : `UpdateNotificationPreferenceCommand`
   (`@CreationPolicy(CREATE_IF_MISSING)`).
 - Commandes sans état : `MarkAllNotificationsReadCommand` (fan-out sur les ids non lus).
@@ -61,8 +63,10 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
   dans le **même processing group** (ordre par agrégat garanti).
 - L'appariement public (`Matchmaking*`) n'est **pas** ingéré : l'écran de recherche bascule en
   direct vers l'arène (aucune notification d'appariement).
-- Les notifications **ne sont pas supprimées** en v1 (pas de TTL) ; seule la date de lecture
-  évolue.
+- **Suppression** : hard delete du read model (`notification_entry`) + `markDeleted()` de
+  l'agrégat. Limite assumée : une relecture Kafka at-least-once postérieure à la suppression peut
+  recréer la notification (la garde `existsById` ne voit plus la ligne) — cas exceptionnel
+  (reset du consumer group).
 
 ---
 
@@ -78,8 +82,10 @@ Aucune query sortante : le service n'écrit que dans sa base et publie ses propr
 - `GET /api/notifications?unreadOnly=&page=&size=` → `PageResponse<NotificationView>`.
 - `GET /api/notifications/unread-count` → `{ count }`.
 - `POST /api/notifications/{id}/read` (propriétaire uniquement) ; `POST /api/notifications/read-all`.
+- `DELETE /api/notifications/{id}` (propriétaire uniquement, `204`) → hard delete.
 - `GET /api/notification-preferences` ; `PUT /api/notification-preferences/{category}`.
-- WS `/topic/notifications/{userId}` (payload `NotificationView` dans un `EventEnvelopeResponse`).
+- WS `/topic/notifications/{userId}` (payload `NotificationView` dans un `EventEnvelopeResponse`,
+  plus l'événement `NOTIFICATION_DELETED` à la suppression).
 
 Read models : `notification_entry`, `notification_preference_entry`,
 `notification_routing_entry` (migration `V1__create_notification_schema.sql`).

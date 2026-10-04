@@ -32,6 +32,13 @@ public interface NotificationCommand {
     ) implements NotificationCommand {
     }
 
+    /** Supprime une notification (hard delete ; seul son destinataire y est autorisé). */
+    record DeleteNotificationCommand(
+            @TargetAggregateIdentifier String notificationId,
+            String userId
+    ) implements NotificationCommand {
+    }
+
     /** Marque toutes les notifications non lues d'un joueur comme lues (fan-out). */
     record MarkAllNotificationsReadCommand(
             String userId
