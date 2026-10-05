@@ -38,4 +38,7 @@ public interface NotificationRepositoryPort {
     long countUnread(String userId);
 
     List<String> findUnreadIds(String userId);
+
+    /** Tous les identifiants de notifications du joueur (lues et non lues). */
+    List<String> findAllIds(String userId);
 }

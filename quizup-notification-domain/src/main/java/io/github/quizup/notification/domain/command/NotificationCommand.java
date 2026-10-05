@@ -45,6 +45,12 @@ public interface NotificationCommand {
     ) implements NotificationCommand {
     }
 
+    /** Supprime toutes les notifications d'un joueur (hard delete, fan-out). */
+    record DeleteAllNotificationsCommand(
+            String userId
+    ) implements NotificationCommand {
+    }
+
     /** Active/désactive une catégorie de notification pour un joueur. */
     record UpdateNotificationPreferenceCommand(
             @TargetAggregateIdentifier String userId,

@@ -92,4 +92,12 @@ public class NotificationRepositoryAdapter implements NotificationRepositoryPort
                 .map(entity -> entity.getNotificationId())
                 .toList();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> findAllIds(String userId) {
+        return repository.findByUserId(userId).stream()
+                .map(entity -> entity.getNotificationId())
+                .toList();
+    }
 }

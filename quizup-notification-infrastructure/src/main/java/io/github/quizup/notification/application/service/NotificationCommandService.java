@@ -7,8 +7,8 @@ import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.springframework.stereotype.Component;
 
 /**
- * Handler de commande sans état : « tout marquer lu » se traduit par un fan-out de commandes
- * unitaires (idempotentes, chacune vérifiant le propriétaire).
+ * Handler de commande sans état : « tout marquer lu » et « tout supprimer » se traduisent par un
+ * fan-out de commandes unitaires (idempotentes, chacune vérifiant le propriétaire).
  */
 @Component
 public class NotificationCommandService {
@@ -26,6 +26,13 @@ public class NotificationCommandService {
     public void handle(NotificationCommand.MarkAllNotificationsReadCommand command) {
         notificationRepository.findUnreadIds(command.userId()).forEach(notificationId ->
                 commandGateway.send(new NotificationCommand.MarkNotificationReadCommand(
+                        notificationId, command.userId())));
+    }
+
+    @CommandHandler
+    public void handle(NotificationCommand.DeleteAllNotificationsCommand command) {
+        notificationRepository.findAllIds(command.userId()).forEach(notificationId ->
+                commandGateway.send(new NotificationCommand.DeleteNotificationCommand(
                         notificationId, command.userId())));
     }
 }

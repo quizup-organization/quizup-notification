@@ -35,7 +35,8 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
   (destinataire uniquement — `NotificationDeletedEvent` puis `AggregateLifecycle.markDeleted()`).
 - `NotificationPreferenceAggregate` : `UpdateNotificationPreferenceCommand`
   (`@CreationPolicy(CREATE_IF_MISSING)`).
-- Commandes sans état : `MarkAllNotificationsReadCommand` (fan-out sur les ids non lus).
+- Commandes sans état : `MarkAllNotificationsReadCommand` (fan-out sur les ids non lus),
+  `DeleteAllNotificationsCommand` (fan-out du hard delete sur tous les ids du joueur).
 - Queries : `GetNotificationsQuery`, `GetNotificationQuery`, `CountUnreadNotificationsQuery`,
   `GetNotificationPreferencesQuery`, `GetUnreadNotificationIdsQuery`.
 
@@ -99,6 +100,7 @@ Aucune query sortante : le service n'écrit que dans sa base et publie ses propr
 - `GET /api/notifications/unread-count` → `{ count }`.
 - `POST /api/notifications/{id}/read` (propriétaire uniquement) ; `POST /api/notifications/read-all`.
 - `DELETE /api/notifications/{id}` (propriétaire uniquement, `204`) → hard delete.
+- `DELETE /api/notifications` (`204`) → vide l'inbox du joueur courant (hard delete, fan-out).
 - `GET /api/notification-preferences` ; `PUT /api/notification-preferences/{category}`.
 - WS `/topic/notifications/{userId}` (payload `NotificationView` dans un `EventEnvelopeResponse`,
   plus l'événement `NOTIFICATION_DELETED` à la suppression).
