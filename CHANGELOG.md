@@ -1,3 +1,9 @@
+## [2.2.1](https://github.com/quizup-organization/quizup-notification/compare/v2.2.0...v2.2.1) (2026-10-05)
+
+### Bug Fixes
+
+* **notification:** ingestion idempotente face au replay apres suppression ([cef4a96](https://github.com/quizup-organization/quizup-notification/commit/cef4a960ed0742c5d15e8d366e28552f6170711d))
+
 ## [2.2.0](https://github.com/quizup-organization/quizup-notification/compare/v2.1.0...v2.2.0) (2026-10-04)
 
 ### Features
