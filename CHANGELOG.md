@@ -1,3 +1,9 @@
+## [2.4.0](https://github.com/quizup-organization/quizup-notification/compare/v2.3.0...v2.4.0) (2026-10-05)
+
+### Features
+
+* **notification:** ingestion du defi nominatif (CHALLENGE_RECEIVED/DECLINED) ([a4d40d8](https://github.com/quizup-organization/quizup-notification/commit/a4d40d81c7c4c73a3b8533b69fb95056304f1b14))
+
 ## [2.3.0](https://github.com/quizup-organization/quizup-notification/compare/v2.2.2...v2.3.0) (2026-10-05)
 
 ### Features
