@@ -14,6 +14,8 @@ import io.github.quizup.social.domain.event.UserFollowerEvent;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
+import org.axonframework.eventsourcing.eventstore.EventStore;
+import org.axonframework.modelling.command.AggregateStreamCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -44,15 +46,18 @@ public class NotificationIngestionHandler {
     private final NotificationRepositoryPort notificationRepository;
     private final NotificationPreferenceRepositoryPort preferenceRepository;
     private final NotificationRoutingRepositoryPort routingRepository;
+    private final EventStore eventStore;
 
     public NotificationIngestionHandler(CommandGateway commandGateway,
                                         NotificationRepositoryPort notificationRepository,
                                         NotificationPreferenceRepositoryPort preferenceRepository,
-                                        NotificationRoutingRepositoryPort routingRepository) {
+                                        NotificationRoutingRepositoryPort routingRepository,
+                                        EventStore eventStore) {
         this.commandGateway = commandGateway;
         this.notificationRepository = notificationRepository;
         this.preferenceRepository = preferenceRepository;
         this.routingRepository = routingRepository;
+        this.eventStore = eventStore;
     }
 
     // ============================== Follows ==============================
@@ -159,11 +164,36 @@ public class NotificationIngestionHandler {
             return;
         }
         String notificationId = deterministicId(type, sourceId, userId);
-        if (notificationRepository.existsById(notificationId)) {
+        // Le read model seul ne suffit pas : après une suppression (hard delete), une relecture
+        // at-least-once (replay Kafka) ne voit plus la ligne et retenterait de créer un agrégat
+        // existant → poison pill. L'event store est la garde d'idempotence durable.
+        if (notificationRepository.existsById(notificationId) || aggregateExists(notificationId)) {
             return;
         }
-        commandGateway.send(new NotificationCommand.CreateNotificationCommand(
-                notificationId, userId, type, actorId, sourceId, topicId, gameId, expiresAt));
+        try {
+            commandGateway.send(new NotificationCommand.CreateNotificationCommand(
+                    notificationId, userId, type, actorId, sourceId, topicId, gameId, expiresAt));
+        } catch (RuntimeException error) {
+            if (isAggregateAlreadyCreated(error)) {
+                logger.warn("Notification {} déjà créée (agrégat existant) — relecture ignorée",
+                        notificationId);
+                return;
+            }
+            throw error;
+        }
+    }
+
+    private boolean aggregateExists(String notificationId) {
+        return eventStore.readEvents(notificationId).hasNext();
+    }
+
+    private static boolean isAggregateAlreadyCreated(Throwable error) {
+        for (Throwable current = error; current != null; current = current.getCause()) {
+            if (current instanceof AggregateStreamCreationException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isEnabled(String userId, NotificationCategory category) {

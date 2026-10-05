@@ -26,8 +26,7 @@
 
 ## 2. Surface (headless)
 
-Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicative unique est le
-**`quizup-bff`**.
+Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicative unique est le **`quizup-bff`**.
 
 ## 3. Use cases (ports entrants — `domain/`)
 
@@ -46,30 +45,32 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 
 `NotificationIngestionHandler` (`@ProcessingGroup("notification-ingestion")`) consomme :
 
-| Événement | Notification |
-|---|---|
-| `UserFollowedEvent` | `FOLLOW` pour le joueur suivi |
-| `LobbyCreatedEvent` (nominatif) | `LOBBY_INVITATION` pour l'invité (+ index de routage) |
-| `LobbyJoinedEvent` | `LOBBY_ACCEPTED` pour l'initiateur |
-| `LobbyDeclinedEvent` | `LOBBY_DECLINED` pour l'initiateur |
-| `LobbyCancelledEvent` | — (invitation en attente expirée, aucune notification) |
-| `LobbyExpiredEvent` | — (invitation en attente expirée, aucune notification) |
+| Événement                       | Notification                                           |
+|---------------------------------|--------------------------------------------------------|
+| `UserFollowedEvent`             | `FOLLOW` pour le joueur suivi                          |
+| `LobbyCreatedEvent` (nominatif) | `LOBBY_INVITATION` pour l'invité (+ index de routage)  |
+| `LobbyJoinedEvent`              | `LOBBY_ACCEPTED` pour l'initiateur                     |
+| `LobbyDeclinedEvent`            | `LOBBY_DECLINED` pour l'initiateur                     |
+| `LobbyCancelledEvent`           | — (invitation en attente expirée, aucune notification) |
+| `LobbyExpiredEvent`             | — (invitation en attente expirée, aucune notification) |
 
 > Les types `LOBBY_CANCELLED` et `LOBBY_EXPIRED` ne sont **plus produits** (« défi raté » sans
 > valeur ajoutée) ; les lignes historiques restent affichables côté client.
 
 - **Idempotence** : `notificationId = UUID.nameUUIDFromBytes(type + ":" + sourceId + ":" + userId)`
-  + garde d'existence + contrainte unique `uq_notification_source` ; une relecture Kafka
-  at-least-once ne duplique pas.
+    + garde d'existence + contrainte unique `uq_notification_source` ; une relecture Kafka
+      at-least-once ne duplique pas.
 - **Routage** : `notification_routing_entry` (alimenté par `LobbyCreated/Joined`) résout les
   destinataires des événements terminaux qui ne les portent pas. L'index et la création vivent
   dans le **même processing group** (ordre par agrégat garanti).
 - L'appariement public (`Matchmaking*`) n'est **pas** ingéré : l'écran de recherche bascule en
   direct vers l'arène (aucune notification d'appariement).
 - **Suppression** : hard delete du read model (`notification_entry`) + `markDeleted()` de
-  l'agrégat. Limite assumée : une relecture Kafka at-least-once postérieure à la suppression peut
-  recréer la notification (la garde `existsById` ne voit plus la ligne) — cas exceptionnel
-  (reset du consumer group).
+  l'agrégat. La création est idempotente **même après suppression** : `createIfAllowed` vérifie le
+  read model **et** l'event store (`EventStore.readEvents`) — une relecture Kafka at-least-once
+  postérieure à une suppression est ignorée au lieu de recréer un agrégat existant (sinon
+  `AggregateStreamCreationException` → poison pill du tracking processor). Un `catch` ciblé sert de
+  filet en cas de course.
 - **Invitations** : à la clôture d'un salon (rejoint, refusé, annulé, expiré, échoué, complété,
   purgé), l'invitation en attente est **expirée dans le read model** (`expiresAt` = instant de
   l'événement) : le client masque Accepter/Refuser et l'acceptation tardive (salon purgé → 404)
