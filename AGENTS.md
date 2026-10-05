@@ -50,6 +50,7 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 | `UserFollowedEvent`             | `FOLLOW` pour le joueur suivi                          |
 | `LobbyCreatedEvent` (nominatif) | `LOBBY_INVITATION` pour l'invité (+ index de routage)  |
 | `LobbyJoinedEvent`              | `LOBBY_ACCEPTED` pour l'initiateur                     |
+| `LobbyCompletedEvent`           | — mais rattache le `gameId` créé aux `LOBBY_ACCEPTED` (deep link arène) |
 | `LobbyDeclinedEvent`            | `LOBBY_DECLINED` pour l'initiateur                     |
 | `LobbyCancelledEvent`           | — (invitation en attente expirée, aucune notification) |
 | `LobbyExpiredEvent`             | — (invitation en attente expirée, aucune notification) |
@@ -76,6 +77,8 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
   l'événement) : le client masque Accepter/Refuser et l'acceptation tardive (salon purgé → 404)
   est évitée. `LobbyFailedEvent` est consommé pour ce seul usage (pas de notification
   `LOBBY_FAILED`).
+- **Deep link partie** : sur `LobbyCompletedEvent`, `attachGameId(sourceId, gameId)` met à jour les
+  `LOBBY_ACCEPTED` du salon — l'inbox peut rejoindre l'arène même après la purge du salon (2 min).
 
 ---
 

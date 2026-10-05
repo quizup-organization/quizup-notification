@@ -87,6 +87,14 @@ class NotificationIngestionHandlerTest {
     }
 
     @Test
+    void lobbyCompleted_attachesGameIdToAcceptance() {
+        handler.on(new LobbyEvent.LobbyCompletedEvent("lobby-6", "game-1", AT));
+
+        verify(notificationRepository).expireInvitations("lobby-6", AT);
+        verify(notificationRepository).attachGameId("lobby-6", "game-1");
+    }
+
+    @Test
     void followReplayedAfterDelete_isSkippedWhenAggregateExists() {
         DomainEventStream existingAggregate = mock(DomainEventStream.class);
         when(existingAggregate.hasNext()).thenReturn(true);

@@ -130,6 +130,9 @@ public class NotificationIngestionHandler {
     @EventHandler
     public void on(LobbyEvent.LobbyCompletedEvent event) {
         notificationRepository.expireInvitations(event.lobbyId(), event.completedAt());
+        // Deep link : les notifications d'acceptation déjà émises pointent vers la partie créée
+        // (le salon est purgé 2 min après ; le gameId reste dans l'inbox).
+        notificationRepository.attachGameId(event.lobbyId(), event.gameId());
         routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
     }
 

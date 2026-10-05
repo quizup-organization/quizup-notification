@@ -43,6 +43,12 @@ public class NotificationRepositoryAdapter implements NotificationRepositoryPort
     }
 
     @Override
+    @Transactional
+    public void attachGameId(String sourceId, String gameId) {
+        repository.attachGameId(sourceId, NotificationType.LOBBY_ACCEPTED, gameId);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Optional<Notification> findById(String notificationId) {
         return repository.findById(notificationId).map(NotificationEntityMapper::toDomain);

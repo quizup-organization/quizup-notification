@@ -20,6 +20,12 @@ public interface NotificationRepositoryPort {
      */
     void expireInvitations(String sourceId, java.time.Instant expiredAt);
 
+    /**
+     * Rattache la partie créée depuis un salon aux notifications d'acceptation déjà émises
+     * (deep link vers l'arène une fois le salon purgé).
+     */
+    void attachGameId(String sourceId, String gameId);
+
     Optional<Notification> findById(String notificationId);
 
     boolean existsById(String notificationId);
