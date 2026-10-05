@@ -1,3 +1,9 @@
+## [2.5.0](https://github.com/quizup-organization/quizup-notification/compare/v2.4.0...v2.5.0) (2026-10-05)
+
+### Features
+
+* **notification:** suppression en masse de l'inbox (DeleteAllNotificationsCommand) ([a126098](https://github.com/quizup-organization/quizup-notification/commit/a1260989e5845e9e0671d0f50016d6389ce2a142))
+
 ## [2.4.0](https://github.com/quizup-organization/quizup-notification/compare/v2.3.0...v2.4.0) (2026-10-05)
 
 ### Features
