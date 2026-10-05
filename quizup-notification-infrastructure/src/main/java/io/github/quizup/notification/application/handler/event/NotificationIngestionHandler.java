@@ -1,5 +1,6 @@
 package io.github.quizup.notification.application.handler.event;
 
+import io.github.quizup.matchmaking.domain.event.ChallengeEvent;
 import io.github.quizup.matchmaking.domain.event.LobbyEvent;
 import io.github.quizup.notification.domain.command.NotificationCommand;
 import io.github.quizup.notification.domain.model.NotificationCategory;
@@ -68,10 +69,44 @@ public class NotificationIngestionHandler {
                 event.followId(), null, null, null);
     }
 
+    // ============================ Défis nominatifs ============================
+
+    /** Défi reçu : l'invitation vit au niveau du défi (sourceId = challengeId), avant la salle. */
+    @EventHandler
+    public void on(ChallengeEvent.ChallengeCreatedEvent event) {
+        createIfAllowed(event.opponentId(), NotificationType.CHALLENGE_RECEIVED, event.challengerId(),
+                event.challengeId(), event.topicId(), null, event.expiresAt());
+    }
+
+    @EventHandler
+    public void on(ChallengeEvent.ChallengeAcceptedEvent event) {
+        // Le défi est accepté : la salle est créée par la saga ; l'invitation n'est plus actionnable.
+        notificationRepository.expireChallengeInvitations(event.challengeId(), event.acceptedAt());
+    }
+
+    @EventHandler
+    public void on(ChallengeEvent.ChallengeDeclinedEvent event) {
+        notificationRepository.expireChallengeInvitations(event.challengeId(), event.declinedAt());
+        createIfAllowed(event.challengerId(), NotificationType.CHALLENGE_DECLINED, event.opponentId(),
+                event.challengeId(), null, null, null);
+    }
+
+    @EventHandler
+    public void on(ChallengeEvent.ChallengeCancelledEvent event) {
+        notificationRepository.expireChallengeInvitations(event.challengeId(), event.cancelledAt());
+    }
+
+    @EventHandler
+    public void on(ChallengeEvent.ChallengeExpiredEvent event) {
+        notificationRepository.expireChallengeInvitations(event.challengeId(), event.expiredAt());
+    }
+
     // =============================== Salons ==============================
 
     @EventHandler
     public void on(LobbyEvent.LobbyCreatedEvent event) {
+        // Index de routage uniquement : l'invitation nominative vit désormais dans le défi
+        // (les salles nominatives sont créées par la saga à l'acceptation).
         routingRepository.save(NotificationRouting.builder()
                 .sourceType(NotificationRoutingSource.LOBBY)
                 .sourceId(event.lobbyId())
@@ -80,10 +115,6 @@ public class NotificationIngestionHandler {
                 .topicId(event.topicId())
                 .updatedAt(event.createdAt())
                 .build());
-        if (event.opponentId() != null) {
-            createIfAllowed(event.opponentId(), NotificationType.LOBBY_INVITATION, event.initiatorId(),
-                    event.lobbyId(), event.topicId(), null, event.expiresAt());
-        }
     }
 
     @EventHandler

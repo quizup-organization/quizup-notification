@@ -44,6 +44,12 @@ public class NotificationRepositoryAdapter implements NotificationRepositoryPort
 
     @Override
     @Transactional
+    public void expireChallengeInvitations(String challengeId, Instant expiredAt) {
+        repository.expireBySourceIdAndType(challengeId, NotificationType.CHALLENGE_RECEIVED, expiredAt);
+    }
+
+    @Override
+    @Transactional
     public void attachGameId(String sourceId, String gameId) {
         repository.attachGameId(sourceId, NotificationType.LOBBY_ACCEPTED, gameId);
     }

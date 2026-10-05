@@ -20,6 +20,9 @@ public interface NotificationRepositoryPort {
      */
     void expireInvitations(String sourceId, java.time.Instant expiredAt);
 
+    /** Expire un défi nominatif en attente (accepté/refusé/annulé/expiré). */
+    void expireChallengeInvitations(String challengeId, java.time.Instant expiredAt);
+
     /**
      * Rattache la partie créée depuis un salon aux notifications d'acceptation déjà émises
      * (deep link vers l'arène une fois le salon purgé).

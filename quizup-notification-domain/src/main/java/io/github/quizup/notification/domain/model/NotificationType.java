@@ -6,6 +6,10 @@ package io.github.quizup.notification.domain.model;
  */
 public enum NotificationType {
     FOLLOW,
+    /** Défi nominatif reçu (intention asynchrone, avant toute salle). */
+    CHALLENGE_RECEIVED,
+    /** Défi nominatif refusé par l'invité. */
+    CHALLENGE_DECLINED,
     LOBBY_INVITATION,
     LOBBY_ACCEPTED,
     LOBBY_DECLINED,

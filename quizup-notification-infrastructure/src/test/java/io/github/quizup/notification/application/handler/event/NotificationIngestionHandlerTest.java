@@ -1,5 +1,6 @@
 package io.github.quizup.notification.application.handler.event;
 
+import io.github.quizup.matchmaking.domain.event.ChallengeEvent;
 import io.github.quizup.matchmaking.domain.event.LobbyEvent;
 import io.github.quizup.notification.domain.command.NotificationCommand;
 import io.github.quizup.notification.domain.model.NotificationRouting;
@@ -90,6 +91,44 @@ class NotificationIngestionHandlerTest {
         handler.on(new LobbyEvent.LobbyFailedEvent("lobby-5", "CREATE_GAME_FAILED", AT));
 
         verify(notificationRepository).expireInvitations("lobby-5", AT);
+    }
+
+    @Test
+    void challengeCreated_notifiesTheOpponent() {
+        handler.on(new ChallengeEvent.ChallengeCreatedEvent(
+                "challenge-1", "topic-1", "challenger", "opponent",
+                AT.plusSeconds(3600), AT));
+
+        ArgumentCaptor<NotificationCommand.CreateNotificationCommand> captor =
+                ArgumentCaptor.forClass(NotificationCommand.CreateNotificationCommand.class);
+        verify(commandGateway).send(captor.capture());
+        assertThat(captor.getValue().userId()).isEqualTo("opponent");
+        assertThat(captor.getValue().type()).isEqualTo(NotificationType.CHALLENGE_RECEIVED);
+        assertThat(captor.getValue().sourceId()).isEqualTo("challenge-1");
+    }
+
+    @Test
+    void challengeDeclined_expiresInvitationAndNotifiesChallenger() {
+        handler.on(new ChallengeEvent.ChallengeDeclinedEvent(
+                "challenge-1", "challenger", "opponent", AT));
+
+        verify(notificationRepository).expireChallengeInvitations("challenge-1", AT);
+
+        ArgumentCaptor<NotificationCommand.CreateNotificationCommand> captor =
+                ArgumentCaptor.forClass(NotificationCommand.CreateNotificationCommand.class);
+        verify(commandGateway).send(captor.capture());
+        assertThat(captor.getValue().userId()).isEqualTo("challenger");
+        assertThat(captor.getValue().type()).isEqualTo(NotificationType.CHALLENGE_DECLINED);
+        assertThat(captor.getValue().actorId()).isEqualTo("opponent");
+    }
+
+    @Test
+    void challengeAccepted_expiresTheInvitation() {
+        handler.on(new ChallengeEvent.ChallengeAcceptedEvent(
+                "challenge-1", "topic-1", "challenger", "opponent", AT));
+
+        verify(notificationRepository).expireChallengeInvitations("challenge-1", AT);
+        verifyNoInteractions(commandGateway);
     }
 
     @Test
