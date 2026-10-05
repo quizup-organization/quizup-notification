@@ -1,3 +1,9 @@
+## [2.2.2](https://github.com/quizup-organization/quizup-notification/compare/v2.2.1...v2.2.2) (2026-10-05)
+
+### Bug Fixes
+
+* **notification:** rattache le gameId aux notifications d'acceptation ([fbef047](https://github.com/quizup-organization/quizup-notification/commit/fbef04741f779ff343a0cdb911168e27c7c064ee))
+
 ## [2.2.1](https://github.com/quizup-organization/quizup-notification/compare/v2.2.0...v2.2.1) (2026-10-05)
 
 ### Bug Fixes
