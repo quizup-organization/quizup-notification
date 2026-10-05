@@ -1,3 +1,9 @@
+## [2.3.0](https://github.com/quizup-organization/quizup-notification/compare/v2.2.2...v2.3.0) (2026-10-05)
+
+### Features
+
+* **notification:** notification durable LOBBY_MISSED ([8d0ae83](https://github.com/quizup-organization/quizup-notification/commit/8d0ae8364db4a42988d5edd617b82669167e0247))
+
 ## [2.2.2](https://github.com/quizup-organization/quizup-notification/compare/v2.2.1...v2.2.2) (2026-10-05)
 
 ### Bug Fixes
