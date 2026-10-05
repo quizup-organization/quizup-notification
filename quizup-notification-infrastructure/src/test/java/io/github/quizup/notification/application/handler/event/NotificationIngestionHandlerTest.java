@@ -1,7 +1,10 @@
 package io.github.quizup.notification.application.handler.event;
 
 import io.github.quizup.matchmaking.domain.event.LobbyEvent;
+import io.github.quizup.notification.domain.command.NotificationCommand;
+import io.github.quizup.notification.domain.model.NotificationRouting;
 import io.github.quizup.notification.domain.model.NotificationRoutingSource;
+import io.github.quizup.notification.domain.model.NotificationType;
 import io.github.quizup.notification.domain.port.out.NotificationPreferenceRepositoryPort;
 import io.github.quizup.notification.domain.port.out.NotificationRepositoryPort;
 import io.github.quizup.notification.domain.port.out.NotificationRoutingRepositoryPort;
@@ -11,9 +14,12 @@ import org.axonframework.eventsourcing.eventstore.DomainEventStream;
 import org.axonframework.eventsourcing.eventstore.EventStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.time.Instant;
+import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -84,6 +90,30 @@ class NotificationIngestionHandlerTest {
         handler.on(new LobbyEvent.LobbyFailedEvent("lobby-5", "CREATE_GAME_FAILED", AT));
 
         verify(notificationRepository).expireInvitations("lobby-5", AT);
+    }
+
+    @Test
+    void lobbyMissed_notifiesTheWaitingPlayer() {
+        NotificationRouting routing = NotificationRouting.builder()
+                .sourceType(NotificationRoutingSource.LOBBY)
+                .sourceId("lobby-7")
+                .initiatorId("absent")
+                .opponentId("waiter")
+                .participantId("waiter")
+                .topicId("topic-1")
+                .updatedAt(AT)
+                .build();
+        when(routingRepository.find(NotificationRoutingSource.LOBBY, "lobby-7"))
+                .thenReturn(Optional.of(routing));
+
+        handler.on(new LobbyEvent.LobbyMissedEvent("lobby-7", "absent", "OPPONENT_OFFLINE", AT));
+
+        ArgumentCaptor<NotificationCommand.CreateNotificationCommand> captor =
+                ArgumentCaptor.forClass(NotificationCommand.CreateNotificationCommand.class);
+        verify(commandGateway).send(captor.capture());
+        assertThat(captor.getValue().userId()).isEqualTo("waiter");
+        assertThat(captor.getValue().type()).isEqualTo(NotificationType.LOBBY_MISSED);
+        assertThat(captor.getValue().actorId()).isEqualTo("absent");
     }
 
     @Test

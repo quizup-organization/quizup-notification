@@ -51,6 +51,7 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 | `LobbyCreatedEvent` (nominatif) | `LOBBY_INVITATION` pour l'invité (+ index de routage)  |
 | `LobbyJoinedEvent`              | `LOBBY_ACCEPTED` pour l'initiateur                     |
 | `LobbyCompletedEvent`           | — mais rattache le `gameId` créé aux `LOBBY_ACCEPTED` (deep link arène) |
+| `LobbyMissedEvent`              | `LOBBY_MISSED` pour le joueur qui a attendu (acteur = absent) |
 | `LobbyDeclinedEvent`            | `LOBBY_DECLINED` pour l'initiateur                     |
 | `LobbyCancelledEvent`           | — (invitation en attente expirée, aucune notification) |
 | `LobbyExpiredEvent`             | — (invitation en attente expirée, aucune notification) |

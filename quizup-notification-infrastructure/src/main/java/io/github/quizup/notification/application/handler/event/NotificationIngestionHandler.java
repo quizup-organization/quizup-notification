@@ -142,6 +142,26 @@ public class NotificationIngestionHandler {
         notificationRepository.expireInvitations(event.lobbyId(), event.failedAt());
     }
 
+    /**
+     * Un joueur ne s'est pas présenté en salle : trace durable pour l'autre (le joueur qui a
+     * attendu). L'acteur de la notification est l'absent.
+     */
+    @EventHandler
+    public void on(LobbyEvent.LobbyMissedEvent event) {
+        notificationRepository.expireInvitations(event.lobbyId(), event.missedAt());
+        routingRepository.find(NotificationRoutingSource.LOBBY, event.lobbyId()).ifPresent(routing -> {
+            String recipient = event.absentPlayerId() != null
+                    && event.absentPlayerId().equals(routing.initiatorId())
+                    ? routing.participantId()
+                    : routing.initiatorId();
+            if (recipient != null) {
+                createIfAllowed(recipient, NotificationType.LOBBY_MISSED, event.absentPlayerId(),
+                        event.lobbyId(), routing.topicId(), null, null);
+            }
+        });
+        routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
+    }
+
     @EventHandler
     public void on(LobbyEvent.LobbyPurgedEvent event) {
         // Filet de sécurité (la purge suit normalement un événement terminal déjà traité).
