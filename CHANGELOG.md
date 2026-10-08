@@ -1,3 +1,9 @@
+## [2.6.0](https://github.com/quizup-organization/quizup-notification/compare/v2.5.0...v2.6.0) (2026-10-08)
+
+### Features
+
+* **notification:** expire les invitations a la purge d'un defi ([bc5ee60](https://github.com/quizup-organization/quizup-notification/commit/bc5ee60c4398f48d3daf8ddbda85c7ea01ebc532))
+
 ## [2.5.0](https://github.com/quizup-organization/quizup-notification/compare/v2.4.0...v2.5.0) (2026-10-05)
 
 ### Features
