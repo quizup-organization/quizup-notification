@@ -101,6 +101,13 @@ public class NotificationIngestionHandler {
         notificationRepository.expireChallengeInvitations(event.challengeId(), event.expiredAt());
     }
 
+    @EventHandler
+    public void on(ChallengeEvent.ChallengePurgedEvent event) {
+        // Filet de sécurité (la purge suit normalement un événement terminal déjà traité) :
+        // l'invitation en attente n'est plus actionnable une fois le défi disparu.
+        notificationRepository.expireChallengeInvitations(event.challengeId(), event.purgedAt());
+    }
+
     // =============================== Salons ==============================
 
     @EventHandler

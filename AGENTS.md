@@ -52,6 +52,7 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 | `ChallengeCreatedEvent`         | `CHALLENGE_RECEIVED` pour l'invité (sourceId = challengeId) |
 | `ChallengeAcceptedEvent`        | — (invitation expirée ; la salle émet ensuite `LOBBY_ACCEPTED`) |
 | `ChallengeDeclinedEvent`        | `CHALLENGE_DECLINED` pour le lanceur                   |
+| `ChallengePurgedEvent`          | — (filet de sécurité : invitation en attente expirée)  |
 | `LobbyCreatedEvent` (nominatif) | — (index de routage seul ; l'invitation vit dans le défi) |
 | `LobbyJoinedEvent`              | `LOBBY_ACCEPTED` pour l'initiateur                     |
 | `LobbyCompletedEvent`           | — mais rattache le `gameId` créé aux `LOBBY_ACCEPTED` (deep link arène) |

@@ -132,6 +132,14 @@ class NotificationIngestionHandlerTest {
     }
 
     @Test
+    void challengePurged_expiresTheInvitationWithoutNotification() {
+        handler.on(new ChallengeEvent.ChallengePurgedEvent("challenge-1", AT));
+
+        verify(notificationRepository).expireChallengeInvitations("challenge-1", AT);
+        verifyNoInteractions(commandGateway);
+    }
+
+    @Test
     void lobbyMissed_notifiesTheWaitingPlayer() {
         NotificationRouting routing = NotificationRouting.builder()
                 .sourceType(NotificationRoutingSource.LOBBY)
