@@ -1,3 +1,9 @@
+## [2.7.0](https://github.com/quizup-organization/quizup-notification/compare/v2.6.0...v2.7.0) (2026-10-10)
+
+### Features
+
+* **notification:** marquer une notification en non lue ([15e147c](https://github.com/quizup-organization/quizup-notification/commit/15e147ca810be8fe85a47d9db699e0d680a15fbd))
+
 ## [2.6.0](https://github.com/quizup-organization/quizup-notification/compare/v2.5.0...v2.6.0) (2026-10-08)
 
 ### Features
