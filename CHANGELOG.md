@@ -1,3 +1,13 @@
+## [3.0.0](https://github.com/quizup-organization/quizup-notification/compare/v2.7.0...v3.0.0) (2026-10-10)
+
+### ⚠ BREAKING CHANGES
+
+* **notification:** types/catégories de notification et schéma V1 réécrits.
+
+### Features
+
+* **notification:** types ROOM_*, routage supprimé, ingestion allégée ([787605d](https://github.com/quizup-organization/quizup-notification/commit/787605df1451d2e61f6feddec0f5a77147f7a852))
+
 ## [2.7.0](https://github.com/quizup-organization/quizup-notification/compare/v2.6.0...v2.7.0) (2026-10-10)
 
 ### Features
