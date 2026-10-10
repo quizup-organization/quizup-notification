@@ -1,16 +1,14 @@
 package io.github.quizup.notification.application.handler.event;
 
 import io.github.quizup.matchmaking.domain.event.ChallengeEvent;
-import io.github.quizup.matchmaking.domain.event.LobbyEvent;
+import io.github.quizup.matchmaking.domain.event.RoomEvent;
+import io.github.quizup.matchmaking.domain.model.ChallengeRoomId;
 import io.github.quizup.notification.domain.command.NotificationCommand;
 import io.github.quizup.notification.domain.model.NotificationCategory;
 import io.github.quizup.notification.domain.model.NotificationPreference;
-import io.github.quizup.notification.domain.model.NotificationRouting;
-import io.github.quizup.notification.domain.model.NotificationRoutingSource;
 import io.github.quizup.notification.domain.model.NotificationType;
 import io.github.quizup.notification.domain.port.out.NotificationPreferenceRepositoryPort;
 import io.github.quizup.notification.domain.port.out.NotificationRepositoryPort;
-import io.github.quizup.notification.domain.port.out.NotificationRoutingRepositoryPort;
 import io.github.quizup.social.domain.event.UserFollowerEvent;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.config.ProcessingGroup;
@@ -28,14 +26,13 @@ import java.util.UUID;
 /**
  * Ingestion des événements de domaine (Kafka) → notifications personnelles.
  * <p>
- * Le routage des destinataires et la création sont dans le **même processing group** : l'ordre
- * par agrégat (clé Kafka) garantit que l'index de routage est à jour avant les événements
- * terminaux. L'identifiant de notification est déterministe (type + source + destinataire) :
- * la relecture at-least-once est idempotente (contrainte unique en base).
+ * L'identifiant de notification est déterministe (type + source + destinataire) : la relecture
+ * at-least-once est idempotente (contrainte unique en base).
  * <p>
- * À la clôture d'un salon, l'**invitation en attente est expirée** dans le read model
- * (`expiresAt` = instant de l'événement) : le client masque Accepter/Refuser et l'acceptation
- * tardive (salon purgé → 404) est évitée.
+ * Les événements de salle ne portent plus de notification d'inbox : la présence et l'échec de
+ * préparation sont poussés en temps réel par le BFF sur {@code /topic/rooms/{roomId}}. Seul
+ * {@code ROOM_COMPLETED} complète la notification d'acceptation avec le {@code gameId} (deep link
+ * arène, la salle étant purgée après rétention).
  */
 @Component
 @ProcessingGroup("notification-ingestion")
@@ -46,18 +43,15 @@ public class NotificationIngestionHandler {
     private final CommandGateway commandGateway;
     private final NotificationRepositoryPort notificationRepository;
     private final NotificationPreferenceRepositoryPort preferenceRepository;
-    private final NotificationRoutingRepositoryPort routingRepository;
     private final EventStore eventStore;
 
     public NotificationIngestionHandler(CommandGateway commandGateway,
                                         NotificationRepositoryPort notificationRepository,
                                         NotificationPreferenceRepositoryPort preferenceRepository,
-                                        NotificationRoutingRepositoryPort routingRepository,
                                         EventStore eventStore) {
         this.commandGateway = commandGateway;
         this.notificationRepository = notificationRepository;
         this.preferenceRepository = preferenceRepository;
-        this.routingRepository = routingRepository;
         this.eventStore = eventStore;
     }
 
@@ -78,10 +72,15 @@ public class NotificationIngestionHandler {
                 event.challengeId(), event.topicId(), null, event.expiresAt());
     }
 
+    /**
+     * Défi accepté : l'invitation n'est plus actionnable et le lanceur est notifié de
+     * l'acceptation (sourceId = roomId déterministe) ; la salle n'est pas encore rejointe.
+     */
     @EventHandler
     public void on(ChallengeEvent.ChallengeAcceptedEvent event) {
-        // Le défi est accepté : la salle est créée par la saga ; l'invitation n'est plus actionnable.
         notificationRepository.expireChallengeInvitations(event.challengeId(), event.acceptedAt());
+        createIfAllowed(event.challengerId(), NotificationType.ROOM_ACCEPTED, event.opponentId(),
+                ChallengeRoomId.of(event.challengeId()), event.topicId(), null, null);
     }
 
     @EventHandler
@@ -108,103 +107,13 @@ public class NotificationIngestionHandler {
         notificationRepository.expireChallengeInvitations(event.challengeId(), event.purgedAt());
     }
 
-    // =============================== Salons ==============================
+    // =============================== Salle ==============================
 
     @EventHandler
-    public void on(LobbyEvent.LobbyCreatedEvent event) {
-        // Index de routage uniquement : l'invitation nominative vit désormais dans le défi
-        // (les salles nominatives sont créées par la saga à l'acceptation).
-        routingRepository.save(NotificationRouting.builder()
-                .sourceType(NotificationRoutingSource.LOBBY)
-                .sourceId(event.lobbyId())
-                .initiatorId(event.initiatorId())
-                .opponentId(event.opponentId())
-                .topicId(event.topicId())
-                .updatedAt(event.createdAt())
-                .build());
-    }
-
-    @EventHandler
-    public void on(LobbyEvent.LobbyJoinedEvent event) {
-        // L'invitation n'est plus en attente dès que le salon est rejoint (même depuis
-        // un autre onglet/appareil) : on l'expire pour masquer Accepter/Refuser.
-        notificationRepository.expireInvitations(event.lobbyId(), event.joinedAt());
-        routingRepository.find(NotificationRoutingSource.LOBBY, event.lobbyId()).ifPresent(routing -> {
-            routingRepository.save(routing.toBuilder()
-                    .participantId(event.participantId())
-                    .updatedAt(event.joinedAt())
-                    .build());
-            createIfAllowed(routing.initiatorId(), NotificationType.LOBBY_ACCEPTED, event.participantId(),
-                    event.lobbyId(), routing.topicId(), null, null);
-        });
-    }
-
-    @EventHandler
-    public void on(LobbyEvent.LobbyDeclinedEvent event) {
-        notificationRepository.expireInvitations(event.lobbyId(), event.declinedAt());
-        String topicId = routingRepository
-                .find(NotificationRoutingSource.LOBBY, event.lobbyId())
-                .map(NotificationRouting::topicId)
-                .orElse(null);
-        createIfAllowed(event.initiatorId(), NotificationType.LOBBY_DECLINED, event.opponentId(),
-                event.lobbyId(), topicId, null, null);
-        routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
-    }
-
-    @EventHandler
-    public void on(LobbyEvent.LobbyCancelledEvent event) {
-        // Plus de notification « défi annulé » : l'invitation en attente est simplement expirée.
-        notificationRepository.expireInvitations(event.lobbyId(), event.cancelledAt());
-        routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
-    }
-
-    @EventHandler
-    public void on(LobbyEvent.LobbyExpiredEvent event) {
-        // Plus de notification « défi expiré » : l'invitation en attente est simplement expirée.
-        notificationRepository.expireInvitations(event.lobbyId(), event.expiredAt());
-        routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
-    }
-
-    @EventHandler
-    public void on(LobbyEvent.LobbyCompletedEvent event) {
-        notificationRepository.expireInvitations(event.lobbyId(), event.completedAt());
-        // Deep link : les notifications d'acceptation déjà émises pointent vers la partie créée
-        // (le salon est purgé 2 min après ; le gameId reste dans l'inbox).
-        notificationRepository.attachGameId(event.lobbyId(), event.gameId());
-        routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
-    }
-
-    /** Échec système : la partie n'a pas pu être créée, l'invitation devient non actionnable. */
-    @EventHandler
-    public void on(LobbyEvent.LobbyFailedEvent event) {
-        notificationRepository.expireInvitations(event.lobbyId(), event.failedAt());
-    }
-
-    /**
-     * Un joueur ne s'est pas présenté en salle : trace durable pour l'autre (le joueur qui a
-     * attendu). L'acteur de la notification est l'absent.
-     */
-    @EventHandler
-    public void on(LobbyEvent.LobbyMissedEvent event) {
-        notificationRepository.expireInvitations(event.lobbyId(), event.missedAt());
-        routingRepository.find(NotificationRoutingSource.LOBBY, event.lobbyId()).ifPresent(routing -> {
-            String recipient = event.absentPlayerId() != null
-                    && event.absentPlayerId().equals(routing.initiatorId())
-                    ? routing.participantId()
-                    : routing.initiatorId();
-            if (recipient != null) {
-                createIfAllowed(recipient, NotificationType.LOBBY_MISSED, event.absentPlayerId(),
-                        event.lobbyId(), routing.topicId(), null, null);
-            }
-        });
-        routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
-    }
-
-    @EventHandler
-    public void on(LobbyEvent.LobbyPurgedEvent event) {
-        // Filet de sécurité (la purge suit normalement un événement terminal déjà traité).
-        notificationRepository.expireInvitations(event.lobbyId(), event.purgedAt());
-        routingRepository.delete(NotificationRoutingSource.LOBBY, event.lobbyId());
+    public void on(RoomEvent.RoomCompletedEvent event) {
+        // Deep link : les notifications d'acceptation pointent vers la partie créée — l'inbox
+        // peut rejoindre l'arène même après la purge de la salle (rétention 2 min).
+        notificationRepository.attachGameId(event.roomId(), event.gameId());
     }
 
     // =====================================================================

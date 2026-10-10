@@ -10,18 +10,13 @@ public enum NotificationType {
     CHALLENGE_RECEIVED,
     /** Défi nominatif refusé par l'invité. */
     CHALLENGE_DECLINED,
-    LOBBY_INVITATION,
-    LOBBY_ACCEPTED,
-    LOBBY_DECLINED,
-    LOBBY_CANCELLED,
-    LOBBY_EXPIRED,
-    /** Un joueur ne s'est pas présenté en salle dans la fenêtre : trace durable pour l'autre. */
-    LOBBY_MISSED;
+    /** Salle acceptée : la partie existe (deep link arène une fois la salle purgée). */
+    ROOM_ACCEPTED;
 
     public NotificationCategory category() {
         return switch (this) {
             case FOLLOW -> NotificationCategory.FOLLOW;
-            default -> NotificationCategory.LOBBY;
+            default -> NotificationCategory.ROOM;
         };
     }
 }

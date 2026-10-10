@@ -14,18 +14,12 @@ public interface NotificationRepositoryPort {
     /** Hard delete de la notification (projection de l'événement de suppression). */
     void deleteById(String notificationId);
 
-    /**
-     * Expire les invitations de défi en attente d'un salon (salon clos : accepté, refusé,
-     * annulé, expiré, échec ou purgé). Le client masque alors les actions d'acceptation.
-     */
-    void expireInvitations(String sourceId, java.time.Instant expiredAt);
-
     /** Expire un défi nominatif en attente (accepté/refusé/annulé/expiré). */
     void expireChallengeInvitations(String challengeId, java.time.Instant expiredAt);
 
     /**
-     * Rattache la partie créée depuis un salon aux notifications d'acceptation déjà émises
-     * (deep link vers l'arène une fois le salon purgé).
+     * Rattache la partie créée depuis une salle aux notifications d'acceptation déjà émises
+     * (deep link vers l'arène une fois la salle purgée).
      */
     void attachGameId(String sourceId, String gameId);
 

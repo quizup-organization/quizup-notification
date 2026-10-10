@@ -1,4 +1,4 @@
--- V1: Schéma notification — inbox par joueur, préférences, routage des destinataires.
+-- V1: Schéma notification — inbox par joueur et préférences.
 -- Les notifications sont dérivées des événements de domaine (id déterministe) : une relecture
 -- Kafka (at-least-once) est idempotente grâce à la PK et à la contrainte unique.
 
@@ -22,19 +22,8 @@ CREATE UNIQUE INDEX uq_notification_source ON notification_entry (type, source_i
 
 CREATE TABLE notification_preference_entry (
     user_id    VARCHAR(255) NOT NULL,
-    category   VARCHAR(40)  NOT NULL,   -- FOLLOW, LOBBY
+    category   VARCHAR(40)  NOT NULL,   -- FOLLOW, ROOM
     enabled    BOOLEAN      NOT NULL,
     updated_at TIMESTAMP    NOT NULL,
     PRIMARY KEY (user_id, category)
-);
-
-CREATE TABLE notification_routing_entry (
-    source_type    VARCHAR(40)  NOT NULL,   -- LOBBY
-    source_id      VARCHAR(255) NOT NULL,
-    initiator_id   VARCHAR(255),
-    opponent_id    VARCHAR(255),
-    participant_id VARCHAR(255),
-    topic_id       VARCHAR(255),
-    updated_at     TIMESTAMP    NOT NULL,
-    PRIMARY KEY (source_type, source_id)
 );

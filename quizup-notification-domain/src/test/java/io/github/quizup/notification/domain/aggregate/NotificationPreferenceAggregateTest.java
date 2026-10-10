@@ -18,20 +18,20 @@ class NotificationPreferenceAggregateTest {
     void update_createsAggregateIfMissing() {
         fixture.givenNoPriorActivity()
                 .when(new NotificationCommand.UpdateNotificationPreferenceCommand(
-                        USER, NotificationCategory.LOBBY, false))
+                        USER, NotificationCategory.ROOM, false))
                 .expectEventsMatching(QuizUpAxonMatchers.singlePayloadMatching(
                         NotificationPreferenceUpdatedEvent.class,
                         e -> !((NotificationPreferenceUpdatedEvent) e).enabled()
                                 && ((NotificationPreferenceUpdatedEvent) e).category()
-                                == NotificationCategory.LOBBY));
+                                == NotificationCategory.ROOM));
     }
 
     @Test
     void update_onExistingAggregate_appliesEvent() {
         fixture.given(new NotificationPreferenceUpdatedEvent(
-                        USER, NotificationCategory.LOBBY, false, java.time.Instant.now()))
+                        USER, NotificationCategory.ROOM, false, java.time.Instant.now()))
                 .when(new NotificationCommand.UpdateNotificationPreferenceCommand(
-                        USER, NotificationCategory.LOBBY, true))
+                        USER, NotificationCategory.ROOM, true))
                 .expectEventsMatching(QuizUpAxonMatchers.hasPayloadMatching(
                         NotificationPreferenceUpdatedEvent.class,
                         e -> ((NotificationPreferenceUpdatedEvent) e).enabled()));
