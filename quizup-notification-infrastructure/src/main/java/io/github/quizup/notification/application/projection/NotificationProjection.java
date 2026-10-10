@@ -50,6 +50,15 @@ public class NotificationProjection {
 
     @EventHandler
     @Transactional
+    public void on(NotificationEvent.NotificationUnreadEvent event) {
+        repository.findById(event.notificationId()).ifPresent(notification ->
+                repository.save(notification.toBuilder()
+                        .readAt(null)
+                        .build()));
+    }
+
+    @EventHandler
+    @Transactional
     public void on(NotificationEvent.NotificationDeletedEvent event) {
         repository.deleteById(event.notificationId());
     }

@@ -68,6 +68,18 @@ public class NotificationAggregate {
         apply(new NotificationEvent.NotificationReadEvent(notificationId, Instant.now()));
     }
 
+    /** Seul le destinataire peut repasser sa notification en non lue (idempotent). */
+    @CommandHandler
+    public void handle(NotificationCommand.MarkNotificationUnreadCommand command) {
+        if (!command.userId().equals(userId)) {
+            throw new NotificationExceptions.NotNotificationOwnerProblem(notificationId, command.userId());
+        }
+        if (readAt == null) {
+            return;
+        }
+        apply(new NotificationEvent.NotificationUnreadEvent(notificationId, Instant.now()));
+    }
+
     /** Seul le destinataire peut supprimer sa notification (hard delete, standard Axon). */
     @CommandHandler
     public void handle(NotificationCommand.DeleteNotificationCommand command) {
@@ -90,6 +102,11 @@ public class NotificationAggregate {
     @EventSourcingHandler
     public void on(NotificationEvent.NotificationReadEvent event) {
         this.readAt = event.readAt();
+    }
+
+    @EventSourcingHandler
+    public void on(NotificationEvent.NotificationUnreadEvent event) {
+        this.readAt = null;
     }
 
     @EventSourcingHandler

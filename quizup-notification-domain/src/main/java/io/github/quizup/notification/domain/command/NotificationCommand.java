@@ -32,6 +32,13 @@ public interface NotificationCommand {
     ) implements NotificationCommand {
     }
 
+    /** Repasse une notification en non lue (seul son destinataire y est autorisé). */
+    record MarkNotificationUnreadCommand(
+            @TargetAggregateIdentifier String notificationId,
+            String userId
+    ) implements NotificationCommand {
+    }
+
     /** Supprime une notification (hard delete ; seul son destinataire y est autorisé). */
     record DeleteNotificationCommand(
             @TargetAggregateIdentifier String notificationId,

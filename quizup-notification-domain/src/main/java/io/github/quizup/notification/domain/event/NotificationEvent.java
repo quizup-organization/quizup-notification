@@ -28,6 +28,13 @@ public interface NotificationEvent {
     ) implements NotificationEvent {
     }
 
+    /** La notification repasse en non lue (swipe inversé / menu desktop) : la date de lecture est effacée. */
+    record NotificationUnreadEvent(
+            String notificationId,
+            Instant unreadAt
+    ) implements NotificationEvent {
+    }
+
     /**
      * La notification est supprimée par son destinataire : le read model est purgé et l'agrégat
      * marqué supprimé ({@code AggregateLifecycle.markDeleted()}) — l'event store conserve

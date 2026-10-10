@@ -61,6 +61,29 @@ class NotificationAggregateTest {
     }
 
     @Test
+    void markUnread_byOwner_appliesUnreadEvent() {
+        fixture.given(created(), new NotificationEvent.NotificationReadEvent(NOTIFICATION_ID, java.time.Instant.now()))
+                .when(new NotificationCommand.MarkNotificationUnreadCommand(NOTIFICATION_ID, USER))
+                .expectEventsMatching(QuizUpAxonMatchers.hasPayloadMatching(
+                        NotificationEvent.NotificationUnreadEvent.class,
+                        e -> NOTIFICATION_ID.equals(((NotificationEvent.NotificationUnreadEvent) e).notificationId())));
+    }
+
+    @Test
+    void markUnread_byOther_isRejected() {
+        fixture.given(created(), new NotificationEvent.NotificationReadEvent(NOTIFICATION_ID, java.time.Instant.now()))
+                .when(new NotificationCommand.MarkNotificationUnreadCommand(NOTIFICATION_ID, "user-2"))
+                .expectException(NotificationExceptions.NotNotificationOwnerProblem.class);
+    }
+
+    @Test
+    void markUnread_isIdempotent() {
+        fixture.given(created())
+                .when(new NotificationCommand.MarkNotificationUnreadCommand(NOTIFICATION_ID, USER))
+                .expectNoEvents();
+    }
+
+    @Test
     void delete_byOwner_appliesDeletedEventAndMarksAggregateDeleted() {
         fixture.given(created())
                 .when(new NotificationCommand.DeleteNotificationCommand(NOTIFICATION_ID, USER))

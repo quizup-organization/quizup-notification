@@ -31,7 +31,8 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 ## 3. Use cases (ports entrants — `domain/`)
 
 - `NotificationAggregate` : `CreateNotificationCommand` (système, identifiant déterministe),
-  `MarkNotificationReadCommand` (destinataire uniquement), `DeleteNotificationCommand`
+  `MarkNotificationReadCommand` (destinataire uniquement), `MarkNotificationUnreadCommand`
+  (destinataire uniquement, idempotent), `DeleteNotificationCommand`
   (destinataire uniquement — `NotificationDeletedEvent` puis `AggregateLifecycle.markDeleted()`).
 - `NotificationPreferenceAggregate` : `UpdateNotificationPreferenceCommand`
   (`@CreationPolicy(CREATE_IF_MISSING)`).
@@ -99,7 +100,8 @@ Aucune query sortante : le service n'écrit que dans sa base et publie ses propr
 
 - `GET /api/notifications?unreadOnly=&page=&size=` → `PageResponse<NotificationView>`.
 - `GET /api/notifications/unread-count` → `{ count }`.
-- `POST /api/notifications/{id}/read` (propriétaire uniquement) ; `POST /api/notifications/read-all`.
+- `POST /api/notifications/{id}/read` (propriétaire uniquement) ; `POST /api/notifications/{id}/unread` ;
+  `POST /api/notifications/read-all`.
 - `DELETE /api/notifications/{id}` (propriétaire uniquement, `204`) → hard delete.
 - `DELETE /api/notifications` (`204`) → vide l'inbox du joueur courant (hard delete, fan-out).
 - `GET /api/notification-preferences` ; `PUT /api/notification-preferences/{category}`.
