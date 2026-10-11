@@ -67,7 +67,8 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 - **Pas d'index de routage** : chaque événement consommé porte ses destinataires (le
   `ChallengeAcceptedEvent` porte lanceur/invité et le roomId est dérivé par `ChallengeRoomId`).
 - L'appariement public (`Matchmaking*`) n'est **pas** ingéré : l'écran de recherche bascule en
-  direct vers l'arène (aucune notification d'appariement).
+  direct vers la **salle** créée (aucune notification d'appariement), puis c'est la salle qui mène
+  à l'arène.
 - **Suppression** : hard delete du read model (`notification_entry`) + `markDeleted()` de
   l'agrégat. La création est idempotente **même après suppression** : `createIfAllowed` vérifie le
   read model **et** l'event store (`EventStore.readEvents`) — une relecture Kafka at-least-once
