@@ -1,3 +1,9 @@
+## [3.1.0](https://github.com/quizup-organization/quizup-notification/compare/v3.0.1...v3.1.0) (2026-10-11)
+
+### Features
+
+* **notification:** l'invitation de revanche porte le gameId d'origine ([68130c6](https://github.com/quizup-organization/quizup-notification/commit/68130c663590e603313ac1cc849ffd1da16ecfdd))
+
 ## [3.0.1](https://github.com/quizup-organization/quizup-notification/compare/v3.0.0...v3.0.1) (2026-10-11)
 
 ### Bug Fixes
