@@ -29,8 +29,9 @@ import java.util.UUID;
  * L'identifiant de notification est déterministe (type + source + destinataire) : la relecture
  * at-least-once est idempotente (contrainte unique en base).
  * <p>
- * Les événements de salle ne portent plus de notification d'inbox : la présence et l'échec de
- * préparation sont poussés en temps réel par le BFF sur {@code /topic/rooms/{roomId}}. Seul
+ * Les événements de salle ne portent plus de notification d'inbox : la présence, l'**avancement de
+ * la préparation** ({@code ROOM_PLAYERS_LOADED}, {@code ROOM_QUESTIONS_LOADED}) et l'échec sont
+ * poussés en temps réel par le BFF sur {@code /topic/rooms/{roomId}}. Seul
  * {@code ROOM_COMPLETED} complète la notification d'acceptation avec le {@code gameId} (deep link
  * arène, la salle étant purgée après rétention).
  */
