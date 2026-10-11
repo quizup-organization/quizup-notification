@@ -53,7 +53,8 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 | `ChallengeCreatedEvent`  | `CHALLENGE_RECEIVED` pour l'invité (sourceId = challengeId, `gameId` = partie d'origine si revanche) |
 | `ChallengeAcceptedEvent` | `ROOM_ACCEPTED` pour le lanceur (sourceId = roomId dérivé, acteur = invité) ; invitation expirée |
 | `ChallengeDeclinedEvent` | `CHALLENGE_DECLINED` pour le lanceur ; invitation expirée         |
-| `ChallengeCancelled/Expired/PurgedEvent` | — (invitation en attente expirée)                  |
+| `ChallengeCancelledEvent` | — (invitation de l'invité **supprimée** → push `NOTIFICATION_DELETED` : la modale se ferme et la carte disparaît en temps réel) |
+| `ChallengeExpired/PurgedEvent` | — (invitation en attente expirée)                 |
 | `RoomCompletedEvent`     | — mais rattache le `gameId` créé aux `ROOM_ACCEPTED` (deep link arène) |
 
 > Les événements de **salle** (`RoomCreated`, `RoomEntered`, `RoomLeft`, `RoomAllPlayersPresent`,
@@ -75,9 +76,12 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
   postérieure à une suppression est ignorée au lieu de recréer un agrégat existant (sinon
   `AggregateStreamCreationException` → poison pill du tracking processor). Un `catch` ciblé sert de
   filet en cas de course.
-- **Invitations** : à l'acceptation/refus/annulation/expiration/purge d'un défi, l'invitation en
-  attente est **expirée dans le read model** (`expiresAt` = instant de l'événement) : le client
-  masque Accepter/Refuser.
+- **Invitations** : à l'acceptation/refus/expiration/purge d'un défi, l'invitation en attente est
+  **expirée dans le read model** (`expiresAt` = instant de l'événement) : le client masque
+  Accepter/Refuser. À l'**annulation** (`ChallengeCancelledEvent`), l'invitation est **supprimée**
+  (hard delete via `DeleteNotificationCommand` sur l'agrégat) : le BFF pousse `NOTIFICATION_DELETED`
+  et le client ferme la modale / retire la carte sans attendre le poll (le backend refuse de toute
+  façon une acceptation sur un défi non `PENDING`).
 - **Deep link partie** : sur `RoomCompletedEvent`, `attachGameId(sourceId, gameId)` met à jour les
   `ROOM_ACCEPTED` de la salle — l'inbox peut rejoindre l'arène même après la purge (2 min).
 

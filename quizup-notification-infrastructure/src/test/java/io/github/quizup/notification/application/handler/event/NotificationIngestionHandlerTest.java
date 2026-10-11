@@ -4,6 +4,7 @@ import io.github.quizup.matchmaking.domain.event.ChallengeEvent;
 import io.github.quizup.matchmaking.domain.event.RoomEvent;
 import io.github.quizup.matchmaking.domain.model.ChallengeRoomId;
 import io.github.quizup.notification.domain.command.NotificationCommand;
+import io.github.quizup.notification.domain.model.Notification;
 import io.github.quizup.notification.domain.model.NotificationType;
 import io.github.quizup.notification.domain.port.out.NotificationPreferenceRepositoryPort;
 import io.github.quizup.notification.domain.port.out.NotificationRepositoryPort;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -109,10 +111,34 @@ class NotificationIngestionHandlerTest {
     }
 
     @Test
-    void challengeCancelled_expiresTheInvitationWithoutNotification() {
+    void challengeCancelled_deletesTheInvitation() {
+        Notification invitation = Notification.builder()
+                .notificationId("notification-1")
+                .userId("opponent")
+                .type(NotificationType.CHALLENGE_RECEIVED)
+                .actorId("challenger")
+                .sourceId("challenge-1")
+                .createdAt(AT)
+                .build();
+        when(notificationRepository.findBySourceIdAndType("challenge-1", NotificationType.CHALLENGE_RECEIVED))
+                .thenReturn(List.of(invitation));
+
         handler.on(new ChallengeEvent.ChallengeCancelledEvent("challenge-1", "challenger", AT));
 
-        verify(notificationRepository).expireChallengeInvitations("challenge-1", AT);
+        ArgumentCaptor<NotificationCommand.DeleteNotificationCommand> captor =
+                ArgumentCaptor.forClass(NotificationCommand.DeleteNotificationCommand.class);
+        verify(commandGateway).sendAndWait(captor.capture());
+        assertThat(captor.getValue().notificationId()).isEqualTo("notification-1");
+        assertThat(captor.getValue().userId()).isEqualTo("opponent");
+    }
+
+    @Test
+    void challengeCancelled_withoutInvitation_doesNothing() {
+        when(notificationRepository.findBySourceIdAndType("challenge-1", NotificationType.CHALLENGE_RECEIVED))
+                .thenReturn(List.of());
+
+        handler.on(new ChallengeEvent.ChallengeCancelledEvent("challenge-1", "challenger", AT));
+
         verifyNoInteractions(commandGateway);
     }
 

@@ -4,6 +4,7 @@ import io.github.quizup.matchmaking.domain.event.ChallengeEvent;
 import io.github.quizup.matchmaking.domain.event.RoomEvent;
 import io.github.quizup.matchmaking.domain.model.ChallengeRoomId;
 import io.github.quizup.notification.domain.command.NotificationCommand;
+import io.github.quizup.notification.domain.model.Notification;
 import io.github.quizup.notification.domain.model.NotificationCategory;
 import io.github.quizup.notification.domain.model.NotificationPreference;
 import io.github.quizup.notification.domain.model.NotificationType;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -92,9 +94,25 @@ public class NotificationIngestionHandler {
                 event.challengeId(), null, null, null);
     }
 
+    /**
+     * Défi annulé : l'invitation n'est plus actionnable — elle est **supprimée** (hard delete) pour
+     * que le client ferme la modale et retire la carte de l'accueil en temps réel (push
+     * {@code NOTIFICATION_DELETED}) au lieu de rester cliquable jusqu'à l'expiration.
+     */
     @EventHandler
     public void on(ChallengeEvent.ChallengeCancelledEvent event) {
-        notificationRepository.expireChallengeInvitations(event.challengeId(), event.cancelledAt());
+        List<Notification> invitations = notificationRepository.findBySourceIdAndType(
+                event.challengeId(), NotificationType.CHALLENGE_RECEIVED);
+        for (Notification invitation : invitations) {
+            try {
+                commandGateway.sendAndWait(new NotificationCommand.DeleteNotificationCommand(
+                        invitation.notificationId(), invitation.userId()));
+            } catch (RuntimeException error) {
+                // Déjà supprimée (course avec l'utilisateur) : plus rien à faire.
+                logger.debug("Invitation {} déjà absente à l'annulation: {}",
+                        invitation.notificationId(), error.toString());
+            }
+        }
     }
 
     @EventHandler

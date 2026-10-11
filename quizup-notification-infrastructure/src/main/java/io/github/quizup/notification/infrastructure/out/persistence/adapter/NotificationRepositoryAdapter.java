@@ -37,6 +37,14 @@ public class NotificationRepositoryAdapter implements NotificationRepositoryPort
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Notification> findBySourceIdAndType(String sourceId, NotificationType type) {
+        return repository.findBySourceIdAndType(sourceId, type).stream()
+                .map(NotificationEntityMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public void expireChallengeInvitations(String challengeId, Instant expiredAt) {
         repository.expireBySourceIdAndType(challengeId, NotificationType.CHALLENGE_RECEIVED, expiredAt);

@@ -26,6 +26,8 @@ public interface NotificationJpaRepository extends JpaRepository<NotificationEnt
 
     List<NotificationEntity> findByUserId(String userId);
 
+    List<NotificationEntity> findBySourceIdAndType(String sourceId, NotificationType type);
+
     /** Expire les notifications d'une source (invitations d'un salon clos) sans toucher au reste. */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update NotificationEntity n set n.expiresAt = :expiredAt "

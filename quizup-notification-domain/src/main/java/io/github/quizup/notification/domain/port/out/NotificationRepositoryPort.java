@@ -2,6 +2,7 @@ package io.github.quizup.notification.domain.port.out;
 
 import io.github.quizup.notification.domain.model.Notification;
 import io.github.quizup.notification.domain.model.NotificationPage;
+import io.github.quizup.notification.domain.model.NotificationType;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +14,9 @@ public interface NotificationRepositoryPort {
 
     /** Hard delete de la notification (projection de l'événement de suppression). */
     void deleteById(String notificationId);
+
+    /** Notifications d'une source pour un type donné (ex. invitations d'un défi). */
+    List<Notification> findBySourceIdAndType(String sourceId, NotificationType type);
 
     /** Expire un défi nominatif en attente (accepté/refusé/annulé/expiré). */
     void expireChallengeInvitations(String challengeId, java.time.Instant expiredAt);
