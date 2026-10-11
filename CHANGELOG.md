@@ -1,3 +1,9 @@
+## [3.0.1](https://github.com/quizup-organization/quizup-notification/compare/v3.0.0...v3.0.1) (2026-10-11)
+
+### Bug Fixes
+
+* **notification:** aligne l'ingestion sur les contrats matchmaking 7.0.0 ([8d196fe](https://github.com/quizup-organization/quizup-notification/commit/8d196fe5318e0e2c7a2c8f4e782aa463346ebdaf))
+
 ## [3.0.0](https://github.com/quizup-organization/quizup-notification/compare/v2.7.0...v3.0.0) (2026-10-10)
 
 ### ⚠ BREAKING CHANGES
