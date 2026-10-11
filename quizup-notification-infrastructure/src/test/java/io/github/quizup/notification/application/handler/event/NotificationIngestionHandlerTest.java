@@ -52,7 +52,7 @@ class NotificationIngestionHandlerTest {
     @Test
     void challengeCreated_notifiesTheOpponent() {
         handler.on(new ChallengeEvent.ChallengeCreatedEvent(
-                "challenge-1", "topic-1", "challenger", "opponent",
+                "challenge-1", "topic-1", "challenger", "opponent", null,
                 AT.plusSeconds(3600), AT));
 
         ArgumentCaptor<NotificationCommand.CreateNotificationCommand> captor =
@@ -61,6 +61,19 @@ class NotificationIngestionHandlerTest {
         assertThat(captor.getValue().userId()).isEqualTo("opponent");
         assertThat(captor.getValue().type()).isEqualTo(NotificationType.CHALLENGE_RECEIVED);
         assertThat(captor.getValue().sourceId()).isEqualTo("challenge-1");
+        assertThat(captor.getValue().gameId()).isNull();
+    }
+
+    @Test
+    void challengeCreated_rematchCarriesSourceGameId() {
+        handler.on(new ChallengeEvent.ChallengeCreatedEvent(
+                "challenge-1", "topic-1", "challenger", "opponent", "game-1",
+                AT.plusSeconds(3600), AT));
+
+        ArgumentCaptor<NotificationCommand.CreateNotificationCommand> captor =
+                ArgumentCaptor.forClass(NotificationCommand.CreateNotificationCommand.class);
+        verify(commandGateway).send(captor.capture());
+        assertThat(captor.getValue().gameId()).isEqualTo("game-1");
     }
 
     @Test

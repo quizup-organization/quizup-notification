@@ -50,7 +50,7 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 | Événement                | Notification                                                      |
 |--------------------------|-------------------------------------------------------------------|
 | `UserFollowedEvent`      | `FOLLOW` pour le joueur suivi                                     |
-| `ChallengeCreatedEvent`  | `CHALLENGE_RECEIVED` pour l'invité (sourceId = challengeId)       |
+| `ChallengeCreatedEvent`  | `CHALLENGE_RECEIVED` pour l'invité (sourceId = challengeId, `gameId` = partie d'origine si revanche) |
 | `ChallengeAcceptedEvent` | `ROOM_ACCEPTED` pour le lanceur (sourceId = roomId dérivé, acteur = invité) ; invitation expirée |
 | `ChallengeDeclinedEvent` | `CHALLENGE_DECLINED` pour le lanceur ; invitation expirée         |
 | `ChallengeCancelled/Expired/PurgedEvent` | — (invitation en attente expirée)                  |

@@ -66,11 +66,12 @@ public class NotificationIngestionHandler {
 
     // ============================ Défis nominatifs ============================
 
-    /** Défi reçu : l'invitation vit au niveau du défi (sourceId = challengeId), avant la salle. */
+    /** Défi reçu : l'invitation vit au niveau du défi (sourceId = challengeId), avant la salle.
+     *  {@code gameId} référence la partie d'origine quand il s'agit d'une revanche. */
     @EventHandler
     public void on(ChallengeEvent.ChallengeCreatedEvent event) {
         createIfAllowed(event.opponentId(), NotificationType.CHALLENGE_RECEIVED, event.challengerId(),
-                event.challengeId(), event.topicId(), null, event.expiresAt());
+                event.challengeId(), event.topicId(), event.gameId(), event.expiresAt());
     }
 
     /**
