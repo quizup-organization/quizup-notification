@@ -1,3 +1,9 @@
+## [3.2.0](https://github.com/quizup-organization/quizup-notification/compare/v3.1.0...v3.2.0) (2026-10-11)
+
+### Features
+
+* **notification:** l'annulation d'un défi supprime l'invitation (push temps réel) ([0d25648](https://github.com/quizup-organization/quizup-notification/commit/0d256480846322179cf2bbb850209bc0c43a33e9))
+
 ## [3.1.0](https://github.com/quizup-organization/quizup-notification/compare/v3.0.1...v3.1.0) (2026-10-11)
 
 ### Features
