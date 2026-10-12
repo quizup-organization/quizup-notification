@@ -1,3 +1,9 @@
+## [3.5.1](https://github.com/quizup-organization/quizup-notification/compare/v3.5.0...v3.5.1) (2026-10-12)
+
+### Bug Fixes
+
+* **notification:** contrats matchmaking 10.2.0 / social 5.2.0 (élagués) ([730a2e2](https://github.com/quizup-organization/quizup-notification/commit/730a2e2e32cb19b7472ba5e0bbc9c81f9fa93267))
+
 ## [3.5.0](https://github.com/quizup-organization/quizup-notification/compare/v3.4.0...v3.5.0) (2026-10-12)
 
 ### Features
