@@ -1,3 +1,9 @@
+## [3.5.0](https://github.com/quizup-organization/quizup-notification/compare/v3.4.0...v3.5.0) (2026-10-12)
+
+### Features
+
+* **console:** consume quizup-sdk 4.7.0 (lag, commandes en vol, snapshots, scheduled) ([84cdee7](https://github.com/quizup-organization/quizup-notification/commit/84cdee7abfc0baadc7003ba047d2b5a0839d9a49))
+
 ## [3.4.0](https://github.com/quizup-organization/quizup-notification/compare/v3.3.0...v3.4.0) (2026-10-12)
 
 ### Features
