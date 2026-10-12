@@ -1,3 +1,9 @@
+## [3.3.0](https://github.com/quizup-organization/quizup-notification/compare/v3.2.0...v3.3.0) (2026-10-12)
+
+### Features
+
+* **console:** consume quizup-sdk 4.5.2 (DLQ Axon par défaut + agent console) ([9e52082](https://github.com/quizup-organization/quizup-notification/commit/9e52082414160a0a161fb41c9b9e8c6dc73221bf))
+
 ## [3.2.0](https://github.com/quizup-organization/quizup-notification/compare/v3.1.0...v3.2.0) (2026-10-11)
 
 ### Features
