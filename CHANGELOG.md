@@ -1,3 +1,9 @@
+## [3.5.2](https://github.com/quizup-organization/quizup-notification/compare/v3.5.1...v3.5.2) (2026-10-12)
+
+### Bug Fixes
+
+* **notification:** SDK quizup-parent 4.7.1 (cycle de beans Configuration/bus distribué au démarrage) ([1baf276](https://github.com/quizup-organization/quizup-notification/commit/1baf2767b3244b109f73107c52820eb80f166e68))
+
 ## [3.5.1](https://github.com/quizup-organization/quizup-notification/compare/v3.5.0...v3.5.1) (2026-10-12)
 
 ### Bug Fixes
