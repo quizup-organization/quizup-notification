@@ -1,3 +1,9 @@
+## [3.4.0](https://github.com/quizup-organization/quizup-notification/compare/v3.3.0...v3.4.0) (2026-10-12)
+
+### Features
+
+* **console:** consume quizup-sdk 4.6.0 (build-info + API interne event store/scheduled) ([02db4aa](https://github.com/quizup-organization/quizup-notification/commit/02db4aa68d2f57306fe25ad4e049c6516a9c6109))
+
 ## [3.3.0](https://github.com/quizup-organization/quizup-notification/compare/v3.2.0...v3.3.0) (2026-10-12)
 
 ### Features
