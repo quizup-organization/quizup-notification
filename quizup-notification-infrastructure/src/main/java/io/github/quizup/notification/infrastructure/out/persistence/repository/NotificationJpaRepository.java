@@ -36,6 +36,15 @@ public interface NotificationJpaRepository extends JpaRepository<NotificationEnt
                                 @Param("type") NotificationType type,
                                 @Param("expiredAt") Instant expiredAt);
 
+    /** Idem, restreint à un destinataire (relance honorée par le joueur visé). */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update NotificationEntity n set n.expiresAt = :expiredAt "
+            + "where n.sourceId = :sourceId and n.type = :type and n.userId = :userId")
+    int expireBySourceIdAndTypeAndUserId(@Param("sourceId") String sourceId,
+                                         @Param("type") NotificationType type,
+                                         @Param("userId") String userId,
+                                         @Param("expiredAt") Instant expiredAt);
+
     /** Rattache la partie créée aux notifications d'acceptation de la source (deep link arène). */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update NotificationEntity n set n.gameId = :gameId "

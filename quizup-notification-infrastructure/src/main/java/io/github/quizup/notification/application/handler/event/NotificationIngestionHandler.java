@@ -31,11 +31,12 @@ import java.util.UUID;
  * L'identifiant de notification est déterministe (type + source + destinataire) : la relecture
  * at-least-once est idempotente (contrainte unique en base).
  * <p>
- * Les événements de salle ne portent plus de notification d'inbox : la présence, l'**avancement de
- * la préparation** ({@code ROOM_PLAYERS_LOADED}, {@code ROOM_QUESTIONS_LOADED}) et l'échec sont
- * poussés en temps réel par le BFF sur {@code /topic/rooms/{roomId}}. Seul
- * {@code ROOM_COMPLETED} complète la notification d'acceptation avec le {@code gameId} (deep link
- * arène, la salle étant purgée après rétention).
+ * Les événements de salle ne portent pas de notification d'inbox (la présence, l'**avancement de
+ * la préparation** et l'échec sont poussés en temps réel par le BFF sur
+ * {@code /topic/rooms/{roomId}}), à deux exceptions près : les **relances** (« wizz ») qui visent,
+ * par définition, un joueur absent de la salle (inbox + push), et {@code ROOM_COMPLETED} qui
+ * complète la notification d'acceptation avec le {@code gameId} (deep link arène, la salle étant
+ * purgée après rétention).
  */
 @Component
 @ProcessingGroup("notification-ingestion")
@@ -129,14 +130,75 @@ public class NotificationIngestionHandler {
 
     // =============================== Salle ==============================
 
+    /**
+     * Relance (« wizz ») : la cible reçoit une entrée d'inbox **unique par salle** — la relance
+     * précédente est remplacée (hard delete → push {@code NOTIFICATION_DELETED}, la carte obsolète
+     * disparaît des autres onglets) puis la nouvelle est créée, non lue : nouveau toast, nouvelle
+     * secousse, nouveau Web Push. L'identifiant déterministe inclut l'horodatage du wizz pour que
+     * la relecture Kafka soit reproductible malgré le remplacement.
+     */
+    @EventHandler
+    public void on(RoomEvent.RoomWizzedEvent event) {
+        replaceRoomWizz(event.roomId());
+        createIfAllowed(event.targetId(), NotificationType.WIZZ, event.playerId(), event.roomId(),
+                null, null, null,
+                deterministicId(NotificationType.WIZZ,
+                        event.roomId() + "@" + event.wizzedAt().toEpochMilli(), event.targetId()));
+    }
+
+    /** Le joueur visé par une relance vient d'apparaître : la relance est honorée (trace expirée). */
+    @EventHandler
+    public void on(RoomEvent.RoomEnteredEvent event) {
+        notificationRepository.expireBySourceIdAndTypeAndUserId(
+                event.roomId(), NotificationType.WIZZ, event.playerId(), event.enteredAt());
+    }
+
     @EventHandler
     public void on(RoomEvent.RoomCompletedEvent event) {
         // Deep link : les notifications d'acceptation pointent vers la partie créée — l'inbox
         // peut rejoindre l'arène même après la purge de la salle (rétention 2 min).
         notificationRepository.attachGameId(event.roomId(), event.gameId());
+        notificationRepository.expireBySourceIdAndType(
+                event.roomId(), NotificationType.WIZZ, event.completedAt());
+    }
+
+    /** Salle annulée par l'initiateur : la relance en attente n'est plus actionnable. */
+    @EventHandler
+    public void on(RoomEvent.RoomCancelledEvent event) {
+        notificationRepository.expireBySourceIdAndType(
+                event.roomId(), NotificationType.WIZZ, event.cancelledAt());
+    }
+
+    /** Salle jamais lancée, expirée : la relance en attente n'est plus actionnable. */
+    @EventHandler
+    public void on(RoomEvent.RoomExpiredEvent event) {
+        notificationRepository.expireBySourceIdAndType(
+                event.roomId(), NotificationType.WIZZ, event.expiredAt());
+    }
+
+    /** Échec de préparation : la relance en attente n'est plus actionnable. */
+    @EventHandler
+    public void on(RoomEvent.RoomFailedEvent event) {
+        notificationRepository.expireBySourceIdAndType(
+                event.roomId(), NotificationType.WIZZ, event.failedAt());
     }
 
     // =====================================================================
+
+    /** Remplace la relance précédente d'une salle (au plus une entrée WIZZ par salle). */
+    private void replaceRoomWizz(String roomId) {
+        for (Notification previous : notificationRepository.findBySourceIdAndType(
+                roomId, NotificationType.WIZZ)) {
+            try {
+                commandGateway.sendAndWait(new NotificationCommand.DeleteNotificationCommand(
+                        previous.notificationId(), previous.userId()));
+            } catch (RuntimeException error) {
+                // Déjà supprimée (course avec l'utilisateur) : plus rien à faire.
+                logger.debug("Relance {} déjà absente au remplacement: {}",
+                        previous.notificationId(), error.toString());
+            }
+        }
+    }
 
     private void createIfAllowed(String userId,
                                  NotificationType type,
@@ -145,6 +207,18 @@ public class NotificationIngestionHandler {
                                  String topicId,
                                  String gameId,
                                  Instant expiresAt) {
+        createIfAllowed(userId, type, actorId, sourceId, topicId, gameId, expiresAt,
+                deterministicId(type, sourceId, userId));
+    }
+
+    private void createIfAllowed(String userId,
+                                 NotificationType type,
+                                 String actorId,
+                                 String sourceId,
+                                 String topicId,
+                                 String gameId,
+                                 Instant expiresAt,
+                                 String notificationId) {
         if (userId == null || sourceId == null) {
             return;
         }
@@ -153,7 +227,6 @@ public class NotificationIngestionHandler {
                     type, type.category(), userId);
             return;
         }
-        String notificationId = deterministicId(type, sourceId, userId);
         // Le read model seul ne suffit pas : après une suppression (hard delete), une relecture
         // at-least-once (replay Kafka) ne voit plus la ligne et retenterait de créer un agrégat
         // existant → poison pill. L'event store est la garde d'idempotence durable.

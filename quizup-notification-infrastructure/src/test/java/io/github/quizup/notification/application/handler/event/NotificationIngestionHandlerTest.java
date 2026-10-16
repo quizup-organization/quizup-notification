@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -163,7 +164,79 @@ class NotificationIngestionHandlerTest {
         handler.on(new RoomEvent.RoomCompletedEvent("room-1", "game-1", AT));
 
         verify(notificationRepository).attachGameId("room-1", "game-1");
+        verify(notificationRepository).expireBySourceIdAndType("room-1", NotificationType.WIZZ, AT);
         verifyNoInteractions(commandGateway);
+    }
+
+    @Test
+    void roomWizzed_replacesPreviousEntryAndNotifiesTheTarget() {
+        Notification previous = Notification.builder()
+                .notificationId("notification-previous")
+                .userId("opponent")
+                .type(NotificationType.WIZZ)
+                .actorId("initiator")
+                .sourceId("room-1")
+                .createdAt(AT.minusSeconds(20))
+                .build();
+        when(notificationRepository.findBySourceIdAndType("room-1", NotificationType.WIZZ))
+                .thenReturn(List.of(previous));
+
+        handler.on(new RoomEvent.RoomWizzedEvent("room-1", "initiator", "opponent", AT));
+
+        ArgumentCaptor<NotificationCommand.DeleteNotificationCommand> deleteCaptor =
+                ArgumentCaptor.forClass(NotificationCommand.DeleteNotificationCommand.class);
+        verify(commandGateway).sendAndWait(deleteCaptor.capture());
+        assertThat(deleteCaptor.getValue().notificationId()).isEqualTo("notification-previous");
+        assertThat(deleteCaptor.getValue().userId()).isEqualTo("opponent");
+
+        ArgumentCaptor<NotificationCommand.CreateNotificationCommand> createCaptor =
+                ArgumentCaptor.forClass(NotificationCommand.CreateNotificationCommand.class);
+        verify(commandGateway).send(createCaptor.capture());
+        assertThat(createCaptor.getValue().userId()).isEqualTo("opponent");
+        assertThat(createCaptor.getValue().type()).isEqualTo(NotificationType.WIZZ);
+        assertThat(createCaptor.getValue().actorId()).isEqualTo("initiator");
+        assertThat(createCaptor.getValue().sourceId()).isEqualTo("room-1");
+    }
+
+    @Test
+    void roomWizzed_secondDeliveryReusesTheSameDeterministicId() {
+        handler.on(new RoomEvent.RoomWizzedEvent("room-1", "initiator", "opponent", AT));
+        handler.on(new RoomEvent.RoomWizzedEvent("room-1", "initiator", "opponent", AT));
+
+        ArgumentCaptor<NotificationCommand.CreateNotificationCommand> captor =
+                ArgumentCaptor.forClass(NotificationCommand.CreateNotificationCommand.class);
+        verify(commandGateway, times(2)).send(captor.capture());
+        assertThat(captor.getAllValues().get(0).notificationId())
+                .isEqualTo(captor.getAllValues().get(1).notificationId());
+    }
+
+    @Test
+    void roomEntered_expiresTheWizzOfTheArrivingPlayer() {
+        handler.on(new RoomEvent.RoomEnteredEvent("room-1", "opponent", null, AT));
+
+        verify(notificationRepository).expireBySourceIdAndTypeAndUserId(
+                "room-1", NotificationType.WIZZ, "opponent", AT);
+    }
+
+    @Test
+    void roomCancelled_expiresPendingWizz() {
+        handler.on(new RoomEvent.RoomCancelledEvent("room-1", "initiator", "PLAYER_CANCELLED", AT));
+
+        verify(notificationRepository).expireBySourceIdAndType("room-1", NotificationType.WIZZ, AT);
+    }
+
+    @Test
+    void roomExpired_expiresPendingWizz() {
+        handler.on(new RoomEvent.RoomExpiredEvent("room-1", AT));
+
+        verify(notificationRepository).expireBySourceIdAndType("room-1", NotificationType.WIZZ, AT);
+    }
+
+    @Test
+    void roomFailed_expiresPendingWizz() {
+        handler.on(new RoomEvent.RoomFailedEvent("room-1", "GAME_CREATION_TIMEOUT", AT));
+
+        verify(notificationRepository).expireBySourceIdAndType("room-1", NotificationType.WIZZ, AT);
     }
 
     @Test

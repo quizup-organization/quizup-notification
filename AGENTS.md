@@ -10,7 +10,8 @@
 
 ## 1. Rôle
 
-- **Inbox** : consomme les événements de domaine des autres services et crée une notification
+- **Inbox** : consomme les événements de domaine des autres services (follows, défis, relances de
+  salle) et crée une notification
   personnelle par destinataire (`notification_entry` : type, acteur, source, sujet, partie,
   expiration, lu/non-lu). Le destinataire peut la marquer lue ou la **supprimer** (hard delete du
   read model, agrégat marqué supprimé).
@@ -55,12 +56,16 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 | `ChallengeDeclinedEvent` | `CHALLENGE_DECLINED` pour le lanceur ; invitation expirée         |
 | `ChallengeCancelledEvent` | — (invitation de l'invité **supprimée** → push `NOTIFICATION_DELETED` : la modale se ferme et la carte disparaît en temps réel) |
 | `ChallengeExpired/PurgedEvent` | — (invitation en attente expirée)                 |
-| `RoomCompletedEvent`     | — mais rattache le `gameId` créé aux `ROOM_ACCEPTED` (deep link arène) |
+| `RoomWizzedEvent`        | `WIZZ` pour la cible (sourceId = roomId, acteur = émetteur) : **une seule entrée par salle**, remplacée à chaque relance (hard delete de la précédente → push `NOTIFICATION_DELETED`) ; expirée quand le joueur visé rejoint la salle ou à la fin de la salle |
+| `RoomCompletedEvent`     | — mais rattache le `gameId` créé aux `ROOM_ACCEPTED` (deep link arène) et expire les relances pendantes |
 
 > Les événements de **salle** (`RoomCreated`, `RoomEntered`, `RoomLeft`, `RoomAllPlayersPresent`,
 > `RoomCancelled`, `RoomExpired`, `RoomFailed`) ne produisent **aucune** notification d'inbox : la
 > présence et l'échec de préparation sont poussés en temps réel par le BFF sur
-> `/topic/rooms/{roomId}`.
+> `/topic/rooms/{roomId}`. **Exception** : la **relance** (« wizz ») vise, par définition, un
+> joueur **absent** de la salle — elle passe par l'inbox (`WIZZ`) pour l'atteindre, et
+> `RoomEnteredEvent` (le joueur visé arrive) / les terminaux de salle expirent la relance
+> pendante.
 
 - **Idempotence** : `notificationId = UUID.nameUUIDFromBytes(type + ":" + sourceId + ":" + userId)`
     + garde d'existence + contrainte unique `uq_notification_source` ; une relecture Kafka

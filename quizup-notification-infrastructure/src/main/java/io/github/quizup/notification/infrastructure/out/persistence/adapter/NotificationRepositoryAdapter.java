@@ -52,6 +52,21 @@ public class NotificationRepositoryAdapter implements NotificationRepositoryPort
 
     @Override
     @Transactional
+    public void expireBySourceIdAndType(String sourceId, NotificationType type, Instant expiredAt) {
+        repository.expireBySourceIdAndType(sourceId, type, expiredAt);
+    }
+
+    @Override
+    @Transactional
+    public void expireBySourceIdAndTypeAndUserId(String sourceId,
+                                                 NotificationType type,
+                                                 String userId,
+                                                 Instant expiredAt) {
+        repository.expireBySourceIdAndTypeAndUserId(sourceId, type, userId, expiredAt);
+    }
+
+    @Override
+    @Transactional
     public void attachGameId(String sourceId, String gameId) {
         repository.attachGameId(sourceId, NotificationType.ROOM_ACCEPTED, gameId);
     }

@@ -21,6 +21,18 @@ public interface NotificationRepositoryPort {
     /** Expire un défi nominatif en attente (accepté/refusé/annulé/expiré). */
     void expireChallengeInvitations(String challengeId, java.time.Instant expiredAt);
 
+    /** Expire les notifications d'une source pour un type donné (ex. relances d'une salle close). */
+    void expireBySourceIdAndType(String sourceId, NotificationType type, java.time.Instant expiredAt);
+
+    /**
+     * Expire les notifications d'une source pour un type et un destinataire donnés (ex. relance
+     * honorée : le joueur visé vient de rejoindre la salle).
+     */
+    void expireBySourceIdAndTypeAndUserId(String sourceId,
+                                          NotificationType type,
+                                          String userId,
+                                          java.time.Instant expiredAt);
+
     /**
      * Rattache la partie créée depuis une salle aux notifications d'acceptation déjà émises
      * (deep link vers l'arène une fois la salle purgée).

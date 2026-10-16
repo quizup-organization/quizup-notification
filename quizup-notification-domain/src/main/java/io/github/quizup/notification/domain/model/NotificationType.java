@@ -11,7 +11,12 @@ public enum NotificationType {
     /** Défi nominatif refusé par l'invité. */
     CHALLENGE_DECLINED,
     /** Salle acceptée : la partie existe (deep link arène une fois la salle purgée). */
-    ROOM_ACCEPTED;
+    ROOM_ACCEPTED,
+    /**
+     * Relance (« wizz ») : un joueur présent dans la salle demande à son adversaire absent de le
+     * rejoindre. Une seule entrée par salle — chaque relance remplace la précédente.
+     */
+    WIZZ;
 
     public NotificationCategory category() {
         return switch (this) {
