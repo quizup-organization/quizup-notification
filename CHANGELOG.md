@@ -1,3 +1,9 @@
+## [3.6.0](https://github.com/quizup-organization/quizup-notification/compare/v3.5.2...v3.6.0) (2026-10-16)
+
+### Features
+
+* **notification:** relance wizz en inbox unique par salle ([0e2af82](https://github.com/quizup-organization/quizup-notification/commit/0e2af82a434c1b847dc78ab8a5ea3f65f9dce356))
+
 ## [3.5.2](https://github.com/quizup-organization/quizup-notification/compare/v3.5.1...v3.5.2) (2026-10-12)
 
 ### Bug Fixes
