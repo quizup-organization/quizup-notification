@@ -54,7 +54,7 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 | `ChallengeCreatedEvent`  | `CHALLENGE_RECEIVED` pour l'invité (sourceId = challengeId, `gameId` = partie d'origine si revanche) |
 | `ChallengeAcceptedEvent` | `ROOM_ACCEPTED` pour le lanceur (sourceId = roomId dérivé, acteur = invité) ; invitation expirée |
 | `ChallengeDeclinedEvent` | `CHALLENGE_DECLINED` pour le lanceur ; invitation expirée         |
-| `ChallengeCancelledEvent` | — (invitation de l'invité **supprimée** → push `NOTIFICATION_DELETED` : la modale se ferme et la carte disparaît en temps réel) |
+| `ChallengeCancelledEvent` | — (invitation de l'invité **supprimée** → push `NOTIFICATION_DELETED` : le toast se ferme et la carte Social disparaît en temps réel) |
 | `ChallengeExpired/PurgedEvent` | — (invitation en attente expirée)                 |
 | `RoomWizzedEvent`        | `WIZZ` pour la cible (sourceId = roomId, acteur = émetteur) : **une seule entrée par salle**, remplacée à chaque relance (hard delete de la précédente → push `NOTIFICATION_DELETED`) ; expirée quand le joueur visé rejoint la salle ou à la fin de la salle |
 | `RoomCompletedEvent`     | — mais rattache le `gameId` créé aux `ROOM_ACCEPTED` (deep link arène) et expire les relances pendantes |
@@ -85,8 +85,8 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
   **expirée dans le read model** (`expiresAt` = instant de l'événement) : le client masque
   Accepter/Refuser. À l'**annulation** (`ChallengeCancelledEvent`), l'invitation est **supprimée**
   (hard delete via `DeleteNotificationCommand` sur l'agrégat) : le BFF pousse `NOTIFICATION_DELETED`
-  et le client ferme la modale / retire la carte sans attendre le poll (le backend refuse de toute
-  façon une acceptation sur un défi non `PENDING`).
+  et le client ferme le toast / retire la carte Social sans attendre le poll (le backend refuse de
+  toute façon une acceptation sur un défi non `PENDING`).
 - **Deep link partie** : sur `RoomCompletedEvent`, `attachGameId(sourceId, gameId)` met à jour les
   `ROOM_ACCEPTED` de la salle — l'inbox peut rejoindre l'arène même après la purge (2 min).
 
