@@ -1,3 +1,9 @@
+## [3.7.0](https://github.com/quizup-organization/quizup-notification/compare/v3.6.0...v3.7.0) (2026-10-17)
+
+### Features
+
+* **notification:** notifie les signalements de questions ([d8fe978](https://github.com/quizup-organization/quizup-notification/commit/d8fe9789e71d473dcd910016936aafe09e415f38))
+
 ## [3.6.0](https://github.com/quizup-organization/quizup-notification/compare/v3.5.2...v3.6.0) (2026-10-16)
 
 ### Features
