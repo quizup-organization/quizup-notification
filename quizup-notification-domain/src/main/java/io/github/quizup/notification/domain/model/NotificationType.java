@@ -16,11 +16,14 @@ public enum NotificationType {
      * Relance (« wizz ») : un joueur présent dans la salle demande à son adversaire absent de le
      * rejoindre. Une seule entrée par salle — chaque relance remplace la précédente.
      */
-    WIZZ;
+    WIZZ,
+    /** Signalement d'une question appartenant à un sujet du joueur. */
+    QUESTION_REPORTED;
 
     public NotificationCategory category() {
         return switch (this) {
             case FOLLOW -> NotificationCategory.FOLLOW;
+            case QUESTION_REPORTED -> NotificationCategory.QUESTION;
             default -> NotificationCategory.ROOM;
         };
     }

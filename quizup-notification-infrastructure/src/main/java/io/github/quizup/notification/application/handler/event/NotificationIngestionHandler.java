@@ -11,6 +11,7 @@ import io.github.quizup.notification.domain.model.NotificationType;
 import io.github.quizup.notification.domain.port.out.NotificationPreferenceRepositoryPort;
 import io.github.quizup.notification.domain.port.out.NotificationRepositoryPort;
 import io.github.quizup.social.domain.event.UserFollowerEvent;
+import io.github.quizup.theme.domain.event.QuestionReportEvent;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
@@ -65,6 +66,22 @@ public class NotificationIngestionHandler {
     public void on(UserFollowerEvent.UserFollowedEvent event) {
         createIfAllowed(event.followedId(), NotificationType.FOLLOW, event.followerId(),
                 event.followId(), null, null, null);
+    }
+
+    // ========================= Signalements de questions =========================
+
+    /**
+     * Un joueur a signalé une question d'un sujet du destinataire. Une notification par
+     * signalement ({@code sourceId = reportId}) : après réactivation, un nouveau signalement
+     * produit bien une nouvelle alerte.
+     */
+    @EventHandler
+    public void on(QuestionReportEvent.QuestionReportedEvent event) {
+        if (event.topicCreatorId() == null) {
+            return;
+        }
+        createIfAllowed(event.topicCreatorId(), NotificationType.QUESTION_REPORTED,
+                event.reporterId(), event.reportId(), event.topicId(), null, null);
     }
 
     // ============================ Défis nominatifs ============================

@@ -9,6 +9,7 @@ import io.github.quizup.notification.domain.model.NotificationType;
 import io.github.quizup.notification.domain.port.out.NotificationPreferenceRepositoryPort;
 import io.github.quizup.notification.domain.port.out.NotificationRepositoryPort;
 import io.github.quizup.social.domain.event.UserFollowerEvent;
+import io.github.quizup.theme.domain.event.QuestionReportEvent;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.eventsourcing.eventstore.DomainEventStream;
 import org.axonframework.eventsourcing.eventstore.EventStore;
@@ -53,8 +54,36 @@ class NotificationIngestionHandlerTest {
     }
 
     @Test
-    void challengeCreated_notifiesTheOpponent() {
-        handler.on(new ChallengeEvent.ChallengeCreatedEvent(
+    void questionReported_notifiesTheTopicCreator() {
+        handler.on(new QuestionReportEvent.QuestionReportedEvent(
+                "thread-1", "report-1", "question-1", "topic-1", "creator-1",
+                "reporter-1", "game-1", java.util.Set.of(
+                        io.github.quizup.theme.domain.model.QuestionReportReason.ANSWERS),
+                "Bonne réponse fausse", null, null, AT));
+
+        ArgumentCaptor<NotificationCommand.CreateNotificationCommand> captor =
+                ArgumentCaptor.forClass(NotificationCommand.CreateNotificationCommand.class);
+        verify(commandGateway).send(captor.capture());
+        assertThat(captor.getValue().userId()).isEqualTo("creator-1");
+        assertThat(captor.getValue().type()).isEqualTo(NotificationType.QUESTION_REPORTED);
+        assertThat(captor.getValue().actorId()).isEqualTo("reporter-1");
+        assertThat(captor.getValue().sourceId()).isEqualTo("report-1");
+        assertThat(captor.getValue().topicId()).isEqualTo("topic-1");
+    }
+
+    @Test
+    void questionReported_withoutTopicCreator_doesNothing() {
+        handler.on(new QuestionReportEvent.QuestionReportedEvent(
+                "thread-1", "report-1", "question-1", "topic-1", null,
+                "reporter-1", "game-1", java.util.Set.of(
+                        io.github.quizup.theme.domain.model.QuestionReportReason.ANSWERS),
+                null, null, null, AT));
+
+        verifyNoInteractions(commandGateway);
+    }
+
+    @Test
+    void challengeCreated_notifiesTheOpponent() {        handler.on(new ChallengeEvent.ChallengeCreatedEvent(
                 "challenge-1", "topic-1", "challenger", "opponent", null,
                 AT.plusSeconds(3600), AT));
 
