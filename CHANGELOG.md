@@ -1,3 +1,9 @@
+## [3.8.0](https://github.com/quizup-organization/quizup-notification/compare/v3.7.0...v3.8.0) (2026-10-18)
+
+### Features
+
+* **notification:** notify account suspension ([a3f0426](https://github.com/quizup-organization/quizup-notification/commit/a3f04261d519b25258c2d953c4ea59cf293ac3da))
+
 ## [3.7.0](https://github.com/quizup-organization/quizup-notification/compare/v3.6.0...v3.7.0) (2026-10-17)
 
 ### Features
