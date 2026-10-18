@@ -19,7 +19,7 @@
         <!-- Pin release du contrat theme (signalements de questions). -->
         <quizup.theme-domain.version>6.12.0</quizup.theme-domain.version>
         <!-- Pin du contrat identity (suspension de compte). -->
-        <quizup.identity-domain.version>2.7.0</quizup.identity-domain.version>
+        <quizup.identity-domain.version>2.9.0</quizup.identity-domain.version>
     </properties>
 
     <dependencies>
