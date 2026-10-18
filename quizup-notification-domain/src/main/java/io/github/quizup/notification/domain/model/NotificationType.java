@@ -18,12 +18,15 @@ public enum NotificationType {
      */
     WIZZ,
     /** Signalement d'une question appartenant à un sujet du joueur. */
-    QUESTION_REPORTED;
+    QUESTION_REPORTED,
+    /** Information obligatoire : le compte du joueur a été suspendu. */
+    ACCOUNT_SUSPENDED;
 
     public NotificationCategory category() {
         return switch (this) {
             case FOLLOW -> NotificationCategory.FOLLOW;
             case QUESTION_REPORTED -> NotificationCategory.QUESTION;
+            case ACCOUNT_SUSPENDED -> NotificationCategory.ACCOUNT;
             default -> NotificationCategory.ROOM;
         };
     }

@@ -1,5 +1,6 @@
 package io.github.quizup.notification.application.handler.event;
 
+import io.github.quizup.identity.domain.event.UserEvent;
 import io.github.quizup.matchmaking.domain.event.ChallengeEvent;
 import io.github.quizup.matchmaking.domain.event.RoomEvent;
 import io.github.quizup.matchmaking.domain.model.ChallengeRoomId;
@@ -66,6 +67,18 @@ public class NotificationIngestionHandler {
     public void on(UserFollowerEvent.UserFollowedEvent event) {
         createIfAllowed(event.followedId(), NotificationType.FOLLOW, event.followerId(),
                 event.followId(), null, null, null);
+    }
+
+    // ============================== Compte ==============================
+
+    /**
+     * Suspension d'un compte : information obligatoire, indépendante des préférences.
+     * La notification est conservée dans l'inbox pour être lue après réactivation.
+     */
+    @EventHandler
+    public void on(UserEvent.UserSuspendedEvent event) {
+        createIfAllowed(event.userId(), NotificationType.ACCOUNT_SUSPENDED,
+                null, event.suspensionId(), null, null, null);
     }
 
     // ========================= Signalements de questions =========================
@@ -239,7 +252,8 @@ public class NotificationIngestionHandler {
         if (userId == null || sourceId == null) {
             return;
         }
-        if (!isEnabled(userId, type.category())) {
+        // Les informations de compte (suspension) sont obligatoires : elles ignorent les préférences.
+        if (type != NotificationType.ACCOUNT_SUSPENDED && !isEnabled(userId, type.category())) {
             logger.debug("Notification {} ignorée (préférence {} désactivée) pour {}",
                     type, type.category(), userId);
             return;

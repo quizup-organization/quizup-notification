@@ -15,7 +15,9 @@
   personnelle par destinataire (`notification_entry` : type, acteur, source, sujet, partie,
   expiration, lu/non-lu). Le destinataire peut la marquer lue ou la **supprimer** (hard delete du
   read model, agrégat marqué supprimé).
-- **Préférences** : une catégorie (`FOLLOW`, `ROOM`, `QUESTION`) peut être coupée ; défaut activé.
+- **Préférences** : une catégorie (`FOLLOW`, `ROOM`, `QUESTION`, `ACCOUNT`) peut être coupée ;
+  défaut activé. La catégorie `ACCOUNT` est **obligatoire** : `ACCOUNT_SUSPENDED` ignore les
+  préférences (information de compte).
   Une notification dont la catégorie est coupée n'est pas créée.
 - **Livraison** : le service publie `NotificationCreatedEvent` sur le bus ; le **BFF** le pousse
   sur `/topic/notifications/{userId}` et l'expose en REST (`/api/notifications`,
@@ -58,6 +60,7 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 | `ChallengeExpired/PurgedEvent` | — (invitation en attente expirée)                 |
 | `RoomWizzedEvent`        | `WIZZ` pour la cible (sourceId = roomId, acteur = émetteur) : **une seule entrée par salle**, remplacée à chaque relance (hard delete de la précédente → push `NOTIFICATION_DELETED`) ; expirée quand le joueur visé rejoint la salle ou à la fin de la salle |
 | `QuestionReportedEvent`  | `QUESTION_REPORTED` pour le créateur du sujet (sourceId = reportId, acteur = signalant, topicId = sujet) — une entrée par signalement, catégorie `QUESTION` |
+| `UserSuspendedEvent`    | `ACCOUNT_SUSPENDED` pour le joueur suspendu (sourceId = suspensionId, sans acteur) — catégorie `ACCOUNT` **obligatoire**, ignorée par les préférences |
 | `RoomCompletedEvent`     | — mais rattache le `gameId` créé aux `ROOM_ACCEPTED` (deep link arène) et expire les relances pendantes |
 
 > Les événements de **salle** (`RoomCreated`, `RoomEntered`, `RoomLeft`, `RoomAllPlayersPresent`,
@@ -96,8 +99,9 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 ## 5. Dépendances inter-services
 
 Contrats consommés (pins release) : `quizup-social-domain`, `quizup-matchmaking-domain`,
-`quizup-theme-domain` (signalements de questions). Aucune query sortante : le service n'écrit que
-dans sa base et publie ses propres événements.
+`quizup-theme-domain` (signalements de questions), `quizup-identity-domain` (suspension de
+compte). Aucune query sortante : le service n'écrit que dans sa base et publie ses propres
+événements.
 
 ---
 

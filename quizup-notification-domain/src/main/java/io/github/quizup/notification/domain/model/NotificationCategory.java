@@ -5,5 +5,7 @@ public enum NotificationCategory {
     FOLLOW,
     ROOM,
     /** Signalements de questions déposés sur les sujets du joueur. */
-    QUESTION
+    QUESTION,
+    /** Informations obligatoires sur le compte (suspension). */
+    ACCOUNT
 }

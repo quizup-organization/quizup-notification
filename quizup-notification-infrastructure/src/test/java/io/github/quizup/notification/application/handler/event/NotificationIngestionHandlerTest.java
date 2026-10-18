@@ -1,10 +1,13 @@
 package io.github.quizup.notification.application.handler.event;
 
+import io.github.quizup.identity.domain.event.UserEvent;
 import io.github.quizup.matchmaking.domain.event.ChallengeEvent;
 import io.github.quizup.matchmaking.domain.event.RoomEvent;
 import io.github.quizup.matchmaking.domain.model.ChallengeRoomId;
 import io.github.quizup.notification.domain.command.NotificationCommand;
 import io.github.quizup.notification.domain.model.Notification;
+import io.github.quizup.notification.domain.model.NotificationCategory;
+import io.github.quizup.notification.domain.model.NotificationPreference;
 import io.github.quizup.notification.domain.model.NotificationType;
 import io.github.quizup.notification.domain.port.out.NotificationPreferenceRepositoryPort;
 import io.github.quizup.notification.domain.port.out.NotificationRepositoryPort;
@@ -19,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,6 +55,26 @@ class NotificationIngestionHandlerTest {
     @BeforeEach
     void setUp() {
         when(eventStore.readEvents(anyString())).thenReturn(absentAggregate);
+    }
+
+    @Test
+    void accountSuspended_isMandatoryEvenWhenAccountPreferenceDisabled() {
+        when(preferenceRepository.find("user-1", NotificationCategory.ACCOUNT))
+                .thenReturn(Optional.of(new NotificationPreference(
+                        "user-1", NotificationCategory.ACCOUNT, false, AT)));
+
+        handler.on(new UserEvent.UserSuspendedEvent(
+                "user-1", "user@quizup.dev", "suspension-1",
+                io.github.quizup.identity.domain.model.UserSuspensionReason.HARASSMENT,
+                "internal", "admin-1", AT, null));
+
+        ArgumentCaptor<NotificationCommand.CreateNotificationCommand> captor =
+                ArgumentCaptor.forClass(NotificationCommand.CreateNotificationCommand.class);
+        verify(commandGateway).send(captor.capture());
+        assertThat(captor.getValue().userId()).isEqualTo("user-1");
+        assertThat(captor.getValue().type()).isEqualTo(NotificationType.ACCOUNT_SUSPENDED);
+        assertThat(captor.getValue().sourceId()).isEqualTo("suspension-1");
+        assertThat(captor.getValue().actorId()).isNull();
     }
 
     @Test
