@@ -1,3 +1,9 @@
+## [3.8.1](https://github.com/quizup-organization/quizup-notification/compare/v3.8.0...v3.8.1) (2026-10-18)
+
+### Bug Fixes
+
+* **notification:** consume identity suspension reasons 2.9.0 ([ce9bc89](https://github.com/quizup-organization/quizup-notification/commit/ce9bc894418088906e28ab798f72641d0c715933))
+
 ## [3.8.0](https://github.com/quizup-organization/quizup-notification/compare/v3.7.0...v3.8.0) (2026-10-18)
 
 ### Features
