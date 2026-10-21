@@ -53,7 +53,7 @@ Service **headless** : aucun contrôleur REST ni WebSocket. La surface applicati
 | Événement                | Notification                                                      |
 |--------------------------|-------------------------------------------------------------------|
 | `UserFollowedEvent`      | `FOLLOW` pour le joueur suivi                                     |
-| `ChallengeCreatedEvent`  | `CHALLENGE_RECEIVED` pour l'invité (sourceId = challengeId, `gameId` = partie d'origine si revanche, `expiresAt` = 5 s pour une revanche — le client ouvre une popup dédiée) |
+| `ChallengeCreatedEvent`  | `CHALLENGE_RECEIVED` pour l'invité (sourceId = challengeId, `gameId` = partie d'origine si revanche, `expiresAt` = 10 s pour une revanche — le client ouvre une popup dédiée) |
 | `ChallengeAcceptedEvent` | `ROOM_ACCEPTED` pour le lanceur (sourceId = roomId dérivé, acteur = invité) ; invitation expirée |
 | `ChallengeDeclinedEvent` | `CHALLENGE_DECLINED` pour le lanceur ; invitation expirée         |
 | `ChallengeCancelledEvent` | — (invitation de l'invité **supprimée** → push `NOTIFICATION_DELETED` : le toast se ferme et la carte Social disparaît en temps réel) |
