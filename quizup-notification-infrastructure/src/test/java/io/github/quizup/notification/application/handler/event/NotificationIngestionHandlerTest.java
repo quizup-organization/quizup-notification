@@ -124,12 +124,13 @@ class NotificationIngestionHandlerTest {
     void challengeCreated_rematchCarriesSourceGameId() {
         handler.on(new ChallengeEvent.ChallengeCreatedEvent(
                 "challenge-1", "topic-1", "challenger", "opponent", "game-1",
-                AT.plusSeconds(3600), AT));
+                AT.plusSeconds(5), AT));
 
         ArgumentCaptor<NotificationCommand.CreateNotificationCommand> captor =
                 ArgumentCaptor.forClass(NotificationCommand.CreateNotificationCommand.class);
         verify(commandGateway).send(captor.capture());
         assertThat(captor.getValue().gameId()).isEqualTo("game-1");
+        assertThat(captor.getValue().expiresAt()).isEqualTo(AT.plusSeconds(5));
     }
 
     @Test
