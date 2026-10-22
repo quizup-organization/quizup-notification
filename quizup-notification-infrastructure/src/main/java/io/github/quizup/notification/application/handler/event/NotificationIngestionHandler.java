@@ -1,7 +1,6 @@
 package io.github.quizup.notification.application.handler.event;
 
 import io.github.quizup.identity.domain.event.UserEvent;
-import io.github.quizup.microservice.core.domain.event.TopicUnpublishedAfterAccountDeletionEvent;
 import io.github.quizup.matchmaking.domain.event.ChallengeEvent;
 import io.github.quizup.matchmaking.domain.event.RoomEvent;
 import io.github.quizup.matchmaking.domain.model.ChallengeRoomId;
@@ -14,6 +13,7 @@ import io.github.quizup.notification.domain.port.out.NotificationPreferenceRepos
 import io.github.quizup.notification.domain.port.out.NotificationRepositoryPort;
 import io.github.quizup.social.domain.event.UserFollowerEvent;
 import io.github.quizup.theme.domain.event.QuestionReportEvent;
+import io.github.quizup.theme.domain.event.TopicEvent.TopicUnpublishedAfterAccountDeletionEvent;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;

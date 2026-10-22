@@ -1,7 +1,7 @@
 package io.github.quizup.notification.application.handler.event;
 
 import io.github.quizup.axon.autoconfigure.erasure.AxonEventStoreErasureService;
-import io.github.quizup.microservice.core.domain.event.UserAccountDeletedEvent;
+import io.github.quizup.identity.domain.event.UserEvent.UserAccountDeletedEvent;
 import org.axonframework.config.ProcessingGroup;
 import org.axonframework.eventhandling.EventHandler;
 import org.springframework.jdbc.core.JdbcTemplate;
