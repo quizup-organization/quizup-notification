@@ -1,6 +1,7 @@
 package io.github.quizup.notification.application.handler.event;
 
 import io.github.quizup.identity.domain.event.UserEvent;
+import io.github.quizup.microservice.core.domain.event.TopicUnpublishedAfterAccountDeletionEvent;
 import io.github.quizup.matchmaking.domain.event.ChallengeEvent;
 import io.github.quizup.matchmaking.domain.event.RoomEvent;
 import io.github.quizup.matchmaking.domain.model.ChallengeRoomId;
@@ -95,6 +96,13 @@ public class NotificationIngestionHandler {
         }
         createIfAllowed(event.topicCreatorId(), NotificationType.QUESTION_REPORTED,
                 event.reporterId(), event.reportId(), event.topicId(), null, null);
+    }
+
+    /** Un sujet publié est repassé en DRAFT après suppression d'un compte. */
+    @EventHandler
+    public void on(TopicUnpublishedAfterAccountDeletionEvent event) {
+        createIfAllowed(event.ownerId(), NotificationType.TOPIC_DRAFTED,
+                null, event.topicId(), event.topicId(), null, null);
     }
 
     // ============================ Défis nominatifs ============================
@@ -252,8 +260,11 @@ public class NotificationIngestionHandler {
         if (userId == null || sourceId == null) {
             return;
         }
-        // Les informations de compte (suspension) sont obligatoires : elles ignorent les préférences.
-        if (type != NotificationType.ACCOUNT_SUSPENDED && !isEnabled(userId, type.category())) {
+        // Les informations de compte (suspension) et la perte de publication d'un sujet sont
+        // obligatoires : elles ignorent les préférences.
+        if (type != NotificationType.ACCOUNT_SUSPENDED
+                && type != NotificationType.TOPIC_DRAFTED
+                && !isEnabled(userId, type.category())) {
             logger.debug("Notification {} ignorée (préférence {} désactivée) pour {}",
                     type, type.category(), userId);
             return;

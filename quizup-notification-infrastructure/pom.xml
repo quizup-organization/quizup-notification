@@ -15,12 +15,12 @@
 
     <properties>
         <!-- Pin release du contrat matchmaking (voir workspace AGENTS § 3) : bumpé après release. -->
-        <quizup.matchmaking-domain.version>11.2.0</quizup.matchmaking-domain.version>
+        <quizup.matchmaking-domain.version>11.5.0</quizup.matchmaking-domain.version>
         <!-- Pin release du contrat theme (signalements de questions). -->
-        <quizup.theme-domain.version>6.12.0</quizup.theme-domain.version>
+        <quizup.theme-domain.version>6.13.1</quizup.theme-domain.version>
         <!-- Pin du contrat identity (suspension de compte). -->
         <!-- 2.9.0 : motifs de suspension de compte étendus (UserSuspendedEvent). -->
-        <quizup.identity-domain.version>2.9.0</quizup.identity-domain.version>
+        <quizup.identity-domain.version>2.11.0</quizup.identity-domain.version>
     </properties>
 
     <dependencies>
@@ -36,7 +36,7 @@
         <dependency>
             <groupId>io.github.quizup</groupId>
             <artifactId>quizup-social-domain</artifactId>
-            <version>5.2.0</version>
+            <version>5.3.1</version>
         </dependency>
         <dependency>
             <groupId>io.github.quizup</groupId>

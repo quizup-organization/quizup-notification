@@ -19,13 +19,15 @@ public enum NotificationType {
     WIZZ,
     /** Signalement d'une question appartenant à un sujet du joueur. */
     QUESTION_REPORTED,
+    /** Un sujet du joueur est repassé en DRAFT après la suppression d'un compte. */
+    TOPIC_DRAFTED,
     /** Information obligatoire : le compte du joueur a été suspendu. */
     ACCOUNT_SUSPENDED;
 
     public NotificationCategory category() {
         return switch (this) {
             case FOLLOW -> NotificationCategory.FOLLOW;
-            case QUESTION_REPORTED -> NotificationCategory.QUESTION;
+            case QUESTION_REPORTED, TOPIC_DRAFTED -> NotificationCategory.QUESTION;
             case ACCOUNT_SUSPENDED -> NotificationCategory.ACCOUNT;
             default -> NotificationCategory.ROOM;
         };
