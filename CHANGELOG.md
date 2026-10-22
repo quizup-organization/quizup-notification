@@ -1,3 +1,9 @@
+## [3.10.0](https://github.com/quizup-organization/quizup-notification/compare/v3.9.0...v3.10.0) (2026-10-22)
+
+### Features
+
+* **notification:** consomme l'événement de dépublication depuis le contrat theme ([23d32ca](https://github.com/quizup-organization/quizup-notification/commit/23d32ca9ce8b5e7fe22b876fef46bea5f1264f98))
+
 ## [3.9.0](https://github.com/quizup-organization/quizup-notification/compare/v3.8.1...v3.9.0) (2026-10-22)
 
 ### Features
