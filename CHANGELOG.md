@@ -1,3 +1,9 @@
+## [3.9.0](https://github.com/quizup-organization/quizup-notification/compare/v3.8.1...v3.9.0) (2026-10-22)
+
+### Features
+
+* **account:** efface l'inbox et notifie les sujets repassés en brouillon ([73c5621](https://github.com/quizup-organization/quizup-notification/commit/73c562101d5c0383ea3bcaeecf37a6e2d6cefc23))
+
 ## [3.8.1](https://github.com/quizup-organization/quizup-notification/compare/v3.8.0...v3.8.1) (2026-10-18)
 
 ### Bug Fixes
